@@ -109,6 +109,7 @@ int main(void) {
     int id_close;
     int fator_elevar = 0;
     int cont_mao = 0;
+    int test;
     bool gui_hand = false;
     bool fechar_jogo = false;
     Estado estado = MENU;
@@ -180,8 +181,10 @@ int main(void) {
                     }
                     for (int i=0;i<MAX_HAND; i++){
                         if (CheckCollisionPointRec(GetMousePosition(), mao.posicao[i].posicao)){
-                            if (mao.posicao[i].vazia == true){
+                            if (mao.posicao[i].vazia == false){
                                 pull = true;
+                                mao.posicao[i].carregada = (Cartas){0};
+                                mao.posicao[i].vazia == true;
                             }
                         }
                     }
@@ -190,7 +193,7 @@ int main(void) {
                             if((CheckCollisionPointRec(GetMousePosition(), areas[i].posicao))){
                                 if(areas[i].vazia == true){
                                     pull = false;
-                                    areas[i].carregada = deck.deck[carta_num];
+                                    areas[i].carregada = mao.posicao[test].carregada;
                                     areas[i].vazia = false;
                                 }
                             }
