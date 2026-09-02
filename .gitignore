@@ -1,0 +1,6 @@
+# Ignorar todos os arquivos executáveis (.exe)
+*.exe
+
+# Opcional: Se você compila em pastas específicas (como bin ou obj) e quer ignorar tudo nelas:
+bin/
+obj/
