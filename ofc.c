@@ -155,7 +155,7 @@ int main(void){
         }
         //--RMB--
         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-            for(int i = 0; i<MAX_POSITION; i++){
+            for(int i = 0; i<MAX_POSITION; i++){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
                 if((CheckCollisionPointRec(GetMousePosition(), campos[i].area) && campos[i].vazia == false)){
                     campos[i].carregada.hp -= 1000;
                 }
@@ -163,18 +163,18 @@ int main(void){
         }
 
         //--Q--
-        if(IsKeyPressed(KEY_Q)){
+        if(IsKeyPressed(KEY_Q)){ //Altera a visibilidade da mao
             alterMao = (!alterMao);     
         }
 
         //Cards Updates
         for (int i=0; i<MAX_POSITION; i++){
-            if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){
+            if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
                 for(int j = 0; j<MAX_DECK; j++){
                     if(cemiterio.cartas[j].id == 0){
-                        cemiterio.cartas[j] = campos[i].carregada;
-                        campos[i].carregada = (Carta){0};
-                        campos[i].vazia = true;
+                        cemiterio.cartas[j] = campos[i].carregada; //Carta morta é atribuida ao cemiterio
+                        campos[i].carregada = (Carta){0}; //A posicao dela e limpa
+                        campos[i].vazia = true; //A posicao e definida como vazia
                         quantMorta += 1;
                         break;
                     }
@@ -201,7 +201,7 @@ int main(void){
                             DrawTexture(mao[i].carregada.textura, mao[i].area.x, mao[i].area.y, WHITE);
                         }
                     }
-                char deckText[64]; 
+                char deckText[64]; //Desenho dos textos de informacoes de qnts de cartas no deck e cemiterio
                 char cemiterioText[64];
                 DrawText(deckText, 6.5*screenWidth/8, 20, 20, BLACK);
                 DrawText(cemiterioText, 6*screenWidth/8, 40, 20, BLACK);
