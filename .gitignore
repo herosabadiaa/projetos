@@ -1,6 +1,5 @@
-# Ignorar todos os arquivos executáveis (.exe)
+# Ignorar todos os arquivos de tipos:
 *.exe
-
-# Opcional: Se você compila em pastas específicas (como bin ou obj) e quer ignorar tudo nelas:
+*.png
 bin/
 obj/
