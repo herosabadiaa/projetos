@@ -22,6 +22,7 @@ typedef struct Carta { //Estruura de uma carta
     Vector2 cordenada; //Onde a carta se localiza
     int id; //Id único 
     int hp; //Vida da carta
+    int atk; //Ataque da carta
 } Carta;
 
 typedef struct Posicao { //Estrutura de posições no campo
@@ -35,6 +36,10 @@ typedef struct Deck { //Estrutura do deck
     Carta cartas[MAX_DECK]; //Lista de cartas
 } Deck;
 
+typedef enum {
+    TURNO_JOGADOR,
+    TURNO_INIMIGO
+} State;
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -67,6 +72,7 @@ int main(void){
         }
         deck.cartas[i].id = i+1;
         deck.cartas[i].hp = 2000;
+        deck.cartas[i].atk = 1000;
     }
     UnloadImage(imagem1); //Descarrega as imagens da memoria
     UnloadImage(imagem2); 
@@ -83,6 +89,7 @@ int main(void){
     int quantMorta = 0; //Variavel q mostra qnts cartas morreram
     Carta arrasto = {0};
     bool alterMao = false;
+    bool compradoTurno = false;
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
     for(int i = 0; i<MAX_POSITION; i++){
@@ -96,77 +103,104 @@ int main(void){
     Deck cemiterio;
     cemiterio = (Deck){0};
     cemiterio.area = (Rectangle){screenWidth-50, screenHeight-150, 50, 50};
+    Rectangle alterTurno = {screenWidth-50, screenHeight-250, 50, 50};
+    State state = TURNO_JOGADOR;
+
+    for(int i=0; i<MAX_HAND; i++){
+        mao[i].carregada = deck.cartas[quantPuxada]; 
+        deck.cartas[quantPuxada] = (Carta){0};        
+        mao[i].vazia = false;
+        quantPuxada += 1;
+    }   
 
     while(!WindowShouldClose()){
         Vector2 mousePosition = GetMousePosition(); //Pega a posicao do mouse
 
-        if (arrasto.id != 0){ //Altera a posicao de uma carta que esta sendo arrastada
-            arrasto.cordenada = (Vector2){mousePosition.x-20, mousePosition.y-30};
-        }
-
         //--------------------------------------------------------------------------
-        // Buttons functions
+        // States features
         //--------------------------------------------------------------------------
-
-        //--LMB--
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
-            if(quantPuxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
-                if (CheckCollisionPointRec(GetMousePosition(), deck.area)){ //Checa a colisão entre o mouse e deck
-                    for(int i=0; i<MAX_HAND; i++){ 
-                        if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
-                            Carta disponivel;
-                            int j;
-                            for(j = 0; j<MAX_DECK; j++){
-                                if(deck.cartas[j].id != 0){
-                                    disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
+        switch (state) {
+            case TURNO_JOGADOR:
+                if (arrasto.id != 0){ //Altera a posicao de uma carta que esta sendo arrastada
+                    arrasto.cordenada = (Vector2){mousePosition.x-20, mousePosition.y-30};
+                }
+                //--LMB--
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
+                    if(quantPuxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
+                        if (CheckCollisionPointRec(GetMousePosition(), deck.area) && compradoTurno == false){ //Checa a colisão entre o mouse e deck
+                            for(int i=0; i<MAX_HAND; i++){ 
+                                if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
+                                    Carta disponivel;
+                                    int j;
+                                    for(j = 0; j<MAX_DECK; j++){
+                                        if(deck.cartas[j].id != 0){
+                                            disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
+                                            break;
+                                        }
+                                    }
+                                    mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
+                                    deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
+                                    mao[i].vazia = false; //A posicao da mao fica cheia
+                                    quantPuxada += 1;
+                                    compradoTurno = true;
                                     break;
                                 }
                             }
-                            mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
-                            deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
-                            mao[i].vazia = false; //A posicao da mao fica cheia
-                            quantPuxada += 1;
-                            break;
+                        }
+                    }
+                    for (int i=0;i<MAX_HAND; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
+                        if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
+                            if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
+                                arrasto = mao[i].carregada;
+                                mao[i].carregada = (Carta){0};
+                                mao[i].vazia = true;
+                            }
+                        }
+                    }
+                    if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
+                        for(int i = 0; i<MAX_POSITION; i++){
+                            if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))){ 
+                                if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
+                                    campos[i].carregada = arrasto;
+                                    arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
+                                    campos[i].vazia = false; //Preenche a posicao
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
-            }
-            for (int i=0;i<MAX_HAND; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
-                if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
-                    if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
-                        arrasto = mao[i].carregada;
-                        mao[i].carregada = (Carta){0};
-                        mao[i].vazia = true;
-                    }
-                }
-            }
-            if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
-                for(int i = 0; i<MAX_POSITION; i++){
-                    if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))){ 
-                        if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
-                            campos[i].carregada = arrasto;
-                            arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
-                            campos[i].vazia = false; //Preenche a posicao
-                            break;
+                break;
+            case TURNO_INIMIGO:
+                //--RMB--
+                if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+                    for(int i = 0; i<MAX_POSITION; i++){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
+                        if((CheckCollisionPointRec(GetMousePosition(), campos[i].area) && campos[i].vazia == false)){
+                            campos[i].carregada.hp -= 1000;
                         }
-                    }
+                    }       
                 }
-            }
-        }
-        //--RMB--
-        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-            for(int i = 0; i<MAX_POSITION; i++){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
-                if((CheckCollisionPointRec(GetMousePosition(), campos[i].area) && campos[i].vazia == false)){
-                    campos[i].carregada.hp -= 1000;
-                }
-            }       
-        }
+                break;
+        }   
+        //--------------------------------------------------------------------------
+        // Global features    
+        //--------------------------------------------------------------------------    
 
+        //--LMB--
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
+                if(state == TURNO_JOGADOR){
+                    state = TURNO_INIMIGO;
+                } else {
+                    state = TURNO_JOGADOR;
+                    compradoTurno = false;
+                }    
+            }
+        }    
         //--Q--
         if(IsKeyPressed(KEY_Q)){ //Altera a visibilidade da mao
             alterMao = (!alterMao);     
         }
-
         //Cards Updates
         for (int i=0; i<MAX_POSITION; i++){
             if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
@@ -182,7 +216,7 @@ int main(void){
                 break;
             }
         }
-                          
+                        
         //--------------------------------------------------------------------------
         // 2. Rendering
         //--------------------------------------------------------------------------
@@ -191,6 +225,7 @@ int main(void){
 
             DrawRectangle(deck.area.x, deck.area.y, deck.area.width, deck.area.height, GREEN); //Desenha a area do deck
             DrawRectangle(cemiterio.area.x, cemiterio.area.y, cemiterio.area.width, cemiterio.area.height, BLACK); //Desenha a area do cemiterio
+            DrawRectangle(alterTurno.x, alterTurno.y, alterTurno.width, alterTurno.height, BLUE);
 
             if(alterMao){
                 DrawRectangle(screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/4, screenWidth/2+10, screenHeight/6, YELLOW); //Desenha a mao
@@ -203,10 +238,10 @@ int main(void){
                     }
                 char deckText[64]; //Desenho dos textos de informacoes de qnts de cartas no deck e cemiterio
                 char cemiterioText[64];
-                DrawText(deckText, 6.5*screenWidth/8, 20, 20, BLACK);
-                DrawText(cemiterioText, 6*screenWidth/8, 40, 20, BLACK);
                 snprintf(cemiterioText, sizeof(cemiterioText), "CEMITERIO: %d/%d", quantMorta, MAX_DECK);
                 snprintf(deckText, sizeof(deckText), "DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK);
+                DrawText(deckText, 6.5*screenWidth/8, 20, 20, BLACK);
+                DrawText(cemiterioText, 6*screenWidth/8, 40, 20, BLACK);
             }   
 
             for(int i=0;i<MAX_POSITION;i++){
@@ -219,6 +254,16 @@ int main(void){
             if (arrasto.id != 0){ //Desenha a carta sendo arrastada
                 DrawTexture(arrasto.textura, arrasto.cordenada.x, arrasto.cordenada.y, WHITE);
             }
+        
+            //TESTES
+            char turnoText[64];
+            if (state == TURNO_JOGADOR) {
+                snprintf(turnoText, sizeof(turnoText), "SEU TURNO");
+            } else {
+                snprintf(turnoText, sizeof(turnoText), "TURNO INIMIGO");
+            }
+
+            DrawText(turnoText, (screenWidth / 2) - (MeasureText(turnoText, 24) / 2), 20, 24, BLACK);
 
         EndDrawing();
     }
