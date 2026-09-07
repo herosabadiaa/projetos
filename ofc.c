@@ -36,9 +36,9 @@ typedef struct Deck { //Estrutura do deck
     Carta cartas[MAX_DECK]; //Lista de cartas
 } Deck;
 
-typedef enum {
-    TURNO_JOGADOR,
-    TURNO_INIMIGO
+typedef enum { //Estrutura de estados
+    TURNO_JOGADOR, //Estado do meu turno
+    TURNO_INIMIGO //Estado do turno inimigo
 } State;
 
 //------------------------------------------------------------------------------------
@@ -88,8 +88,8 @@ int main(void){
     int quantPuxada = 0; //Intancia a variavel que conta qnts vezes uma carta foi puxada
     int quantMorta = 0; //Variavel q mostra qnts cartas morreram
     Carta arrasto = {0};
-    bool alterMao = false;
-    bool compradoTurno = false;
+    bool alterMao = false; //Bool para controlar a visibilidade da mao
+    bool compradoTurno = false; //Flag para controlar a comprar por rodada
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
     for(int i = 0; i<MAX_POSITION; i++){
@@ -100,13 +100,14 @@ int main(void){
         campos[i].vazia = true;
     }
 
-    Deck cemiterio;
+    Deck cemiterio; //Estrutura do cemiterio
     cemiterio = (Deck){0};
     cemiterio.area = (Rectangle){screenWidth-50, screenHeight-150, 50, 50};
-    Rectangle alterTurno = {screenWidth-50, screenHeight-250, 50, 50};
-    State state = TURNO_JOGADOR;
 
-    for(int i=0; i<MAX_HAND; i++){
+    Rectangle alterTurno = {screenWidth-50, screenHeight-250, 50, 50}; //Define a opcao de finalizar o turno
+    State state = TURNO_JOGADOR; //Estado inicial = meu turno
+
+    for(int i=0; i<MAX_HAND; i++){ //Inicializa o deck com 6 cartas iniciais
         mao[i].carregada = deck.cartas[quantPuxada]; 
         deck.cartas[quantPuxada] = (Carta){0};        
         mao[i].vazia = false;
@@ -187,13 +188,13 @@ int main(void){
         //--------------------------------------------------------------------------    
 
         //--LMB--
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Alterna entre os turnos ao clicar no botao de alterar turno
             if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
                 if(state == TURNO_JOGADOR){
-                    state = TURNO_INIMIGO;
+                    state = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
                 } else {
-                    state = TURNO_JOGADOR;
-                    compradoTurno = false;
+                    state = TURNO_JOGADOR; //Inimigo finaliza o turno
+                    compradoTurno = false;  //Me permite comprar outra carta 
                 }    
             }
         }    
@@ -201,6 +202,7 @@ int main(void){
         if(IsKeyPressed(KEY_Q)){ //Altera a visibilidade da mao
             alterMao = (!alterMao);     
         }
+
         //Cards Updates
         for (int i=0; i<MAX_POSITION; i++){
             if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
@@ -254,9 +256,25 @@ int main(void){
             if (arrasto.id != 0){ //Desenha a carta sendo arrastada
                 DrawTexture(arrasto.textura, arrasto.cordenada.x, arrasto.cordenada.y, WHITE);
             }
-        
-            //TESTES
-            char turnoText[64];
+            
+            //Cards Info
+            char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
+            char vidaCarta[16];
+            char ataqueCarta[16];
+            for (int i=0; i<MAX_POSITION; i++){
+            if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                if (campos[i].vazia == false){
+                    snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %d", campos[i].carregada.id);
+                    snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", campos[i].carregada.hp);
+                    snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", campos[i].carregada.atk);
+                    DrawText(nomeCarta, 5, 5, 20, BLACK);
+                    DrawText(vidaCarta, 5, 25, 20, BLACK);
+                    DrawText(ataqueCarta, 5, 45, 20, BLACK);
+                    }
+                }
+            }
+
+            char turnoText[64]; //Dsenha em que turno o jogo esta
             if (state == TURNO_JOGADOR) {
                 snprintf(turnoText, sizeof(turnoText), "SEU TURNO");
             } else {
