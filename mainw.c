@@ -2,392 +2,388 @@
 // Libraries
 //----------------------------------------------------------------------------------
 #include "raylib.h"
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
-#define MAX_POSITION 5
-#define MAX_HAND 6 
-#define MAX_DECK 60
-#define MAX_CEMITERIO 60
+#define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
+#define MAX_HAND 6 //Define o maximo de cartas na mao
+#define MAX_POSITION 6//Define o maximo de posicoes
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-typedef struct Cartas {
-    Texture2D textura;
-    Vector2 posicao;
-    int id;
-    int hp;
-} Cartas;
 
-typedef struct Posicoes {
-    Rectangle posicao;
-    Cartas carregada;
-    bool vazia;
-} Posicoes;
+typedef struct Carta { //Estruura de uma carta
+    Texture2D textura; //Textura da carta
+    Vector2 cordenada; //Onde a carta se localiza
+    int id; //Id único 
+    int hp; //Vida da carta
+    int atk; //Ataque da carta
+} Carta;
 
-typedef struct Deck {
-    Rectangle deck_area;
-    Cartas deck[MAX_DECK];
+typedef struct Posicao { //Estrutura de posições no campo
+    Rectangle area; //Local que ocupa da tela
+    Carta carregada; //Carta que esta tribuida
+    bool vazia; //Posicao vazia?
+} Posicao;
+
+typedef struct Deck { //Estrutura do deck
+    Rectangle area; //Local que ocupa da tela
+    Carta cartas[MAX_DECK]; //Lista de cartas
 } Deck;
 
-typedef struct Cemiterio {
-    Cartas cemiterio[MAX_CEMITERIO];
-    Rectangle cemit_area;
-} Cemiterio;
+typedef enum { //Estrutura de estados
+    TURNO_JOGADOR, //Estado do meu turno
+    TURNO_INIMIGO //Estado do turno inimigo
+} TurnState;
 
-typedef enum Estado {
+typedef enum {
     MENU,
-    TURNO
-} Estado;
-
-typedef struct Mao {
-    Posicoes posicao[MAX_HAND];
-} Mao;
-
+    JOGANDO
+} GameState;
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main(void) {
+int main(void){
     //------------------------------------------------------------------------------
     // Window Initialization
     //------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
-    InitWindow(screenWidth, screenHeight, "DycksonFanGame");
-    SetTargetFPS(60);  
+    const int screenWidth = 800; //Define a largura da tela
+    const int screenHeight = 450; //Define a altura da tela
+    InitWindow(screenWidth, screenHeight, "Dyckson Guloso Adventure"); //Inicializa a janela
+    SetTargetFPS(60); //Define o FPS  
     
     //------------------------------------------------------------------------------
-    // Game Entities Initialization
+    // Deck & Images Initialization
     //------------------------------------------------------------------------------
-    //Instancia o deck
-    Deck deck;
-    deck.deck_area = (Rectangle){screenWidth-50, screenHeight-50, 50, 50};
-
-    Mao mao;
-    for(int i=0; i<6; i++){
-        mao.posicao[i].posicao = (Rectangle){(screenWidth/2-screenWidth/4) + (56.6*i)+45.3, screenHeight/2-screenHeight/4+5, 40, 40};
-    }
-
-    //Instancia as cartasazul
-    Image imagem = LoadImage("images/azul.png");
-    Image imagem2 = LoadImage("images/verde.png");
-    ImageResize(&imagem, 40, 40);
-    ImageResize(&imagem2, 40, 40);
-    Texture2D textura = LoadTextureFromImage(imagem);
+    Deck deck; //Instancia o Deck
+    deck.area = (Rectangle){screenWidth-50, screenHeight-50, 50, 50}; //Define a area que o deck ocupara
+    Image imagem1 = LoadImage("images/azul.png"); //Define a imagem 
+    Image imagem2 = LoadImage("images/verde.png"); 
+    ImageResize(&imagem1, 40, 60); //Modifica o tamanho da imagem
+    ImageResize(&imagem2, 40, 60); //
+    Texture2D textura = LoadTextureFromImage(imagem1); //Atribui a imagem a uma textura
     Texture2D textura2 = LoadTextureFromImage(imagem2);
-    for(int i=0;i<MAX_DECK;i++){
+    for(int i=0;i<MAX_DECK;i++){ //Percorre as cartas abribuindo uma textura e id
         if(i%2 == 0){
-            deck.deck[i].textura = textura;
+            deck.cartas[i].textura = textura;
         } else{
-            deck.deck[i].textura = textura2;
+            deck.cartas[i].textura = textura2;
         }
-        deck.deck[i].hp = 2000;
-        deck.deck[i].id = i+1;
+        deck.cartas[i].id = i+1;
+        deck.cartas[i].hp = 2000;
+        deck.cartas[i].atk = 1000;
     }
-    UnloadImage(imagem); 
+    UnloadImage(imagem1); //Descarrega as imagens da memoria
+    UnloadImage(imagem2); 
+ 
+    //------------------------------------------------------------------------------
+    // Game Entities Initialization
+    //------------------------------------------------------------------------------    
+    Posicao mao[6] = {0}; //Instancia a mao
+    for(int i=0; i<6; i++){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
+        mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (56.6*i)+45.3, screenHeight/2-screenHeight/4+7.5, 40, 60};
+        mao[i].vazia = true;
+    }
+    int quantPuxada = 0; //Intancia a variavel que conta qnts vezes uma carta foi puxada
+    int quantMorta = 0; //Variavel q mostra qnts cartas morreram
+    Carta arrasto = {0};
+    bool alterMao = false; //Bool para controlar a visibilidade da mao
+    bool compradoTurno = false; //Flag para controlar a comprar por rodada
+    bool fecharJogo = false;
 
-    //Instancia o cemiterio
-    Cemiterio cemiterio;
-    cemiterio.cemit_area = (Rectangle){screenWidth-50, screenHeight-150, 50, 50};
-
-    //Diversas flags
-    Vector2 mousePosition = {-100, -100};
-    Rectangle areaRec = {-100, -100};
-    bool pull = false;
-    int carta_num = 0;
-    int cemit_num = 0;
-    bool vis_cemit = false;
-    bool vis_deck = false;
-    bool gui_cemit = false;
-    bool close = false;
-    int id_close;
-    int fator_elevar = 0;
-    int cont_mao = 0;
-    int test;
-    bool gui_hand = false;
-    bool fechar_jogo = false;
-    Estado estado = MENU;
-
-
-    // Cria e define a posição das áreas do campo
-    Posicoes areas[MAX_POSITION]; 
+    Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
     for(int i = 0; i<MAX_POSITION; i++){
-        areas[i].posicao.x = i*screenWidth/MAX_POSITION;
-        areas[i].posicao.y = 3*screenHeight/4;
-        areas[i].posicao.width = 80;
-        areas[i].posicao.height =120;
-        areas[i].vazia = true;
+        campos[i].area.x = i*screenWidth/MAX_POSITION;
+        campos[i].area.y = 3*screenHeight/4;
+        campos[i].area.width = 80;
+        campos[i].area.height =120;
+        campos[i].vazia = true;
     }
 
-    //Opções no Menu
-    Rectangle jogar = {screenWidth/2 - screenWidth/8, screenHeight/2, screenWidth/4, screenHeight/8};
-    Rectangle fechar = {screenWidth/2 - screenWidth/8, screenHeight/2 + screenHeight/4, screenWidth/4, screenHeight/8};
+    Deck cemiterio; //Estrutura do cemiterio
+    cemiterio = (Deck){0};
+    cemiterio.area = (Rectangle){screenWidth-50, screenHeight-150, 50, 50};
 
+    Rectangle alterTurno = {screenWidth-50, screenHeight-250, 50, 50}; //Define a opcao de finalizar o turno
+    GameState gameState = MENU; 
+    TurnState turnState = TURNO_JOGADOR;
 
-    //------------------------------------------------------------------------------
-    // Main Game Loop
-    //------------------------------------------------------------------------------
-    while(!fechar_jogo && !WindowShouldClose()){
-        // 1. Update / Input Handling
-        //--------------------------------------------------------------------------
+    Rectangle jogar = {screenWidth/2 - 110, screenHeight/2 + 20, 220, 50};
+    Rectangle fechar = {screenWidth/2 - 110, screenHeight/2 + 90, 220, 50};
 
-        //Future trail system
-        mousePosition = GetMousePosition();
-        areaRec = (Rectangle){mousePosition.x-0.25, mousePosition.y-0.25, 0.5,0.5};
+    for(int i=0; i<MAX_HAND; i++){ //Inicializa o deck com 6 cartas iniciais
+        mao[i].carregada = deck.cartas[quantPuxada]; 
+        deck.cartas[quantPuxada] = (Carta){0};        
+        mao[i].vazia = false;
+        quantPuxada += 1;
+    }   
 
-        //Define os estados
-        switch(estado) {
-            //Define o menu
+    while(!WindowShouldClose() && !fecharJogo){
+        Vector2 mousePosition = GetMousePosition(); //Pega a posicao do mouse
+        switch(gameState){
             case MENU:
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                    if ((CheckCollisionPointRec(GetMousePosition(), jogar))){
-                        estado = TURNO;
+                        if ((CheckCollisionPointRec(GetMousePosition(), jogar))){
+                            gameState = JOGANDO;
+
+                        }
+                        if ((CheckCollisionPointRec(GetMousePosition(), fechar))){
+                            fecharJogo = true;
+                        }
                     }
-                    if ((CheckCollisionPointRec(GetMousePosition(), fechar))){
-                        fechar_jogo = true;
-                    }
-                }
                 break;
-
-            //Define o campo
-            case TURNO:
-                if (pull){
-                    deck.deck[carta_num].posicao = (Vector2){mousePosition.x-20, mousePosition.y-20};
-                }
-
-                if (close){
-                    if(IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)){
-                        close = false;
-                    }
-                }
-
-                // Clique com botão esquerdo
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                    if(carta_num < MAX_DECK){
-                        if (CheckCollisionPointRec(GetMousePosition(), deck.deck_area)){
-                            if(cont_mao <= MAX_HAND-1){
-                                mao.posicao[cont_mao].carregada = deck.deck[carta_num];
-                                mao.posicao[cont_mao].vazia = false;
-                                carta_num += 1;
-                                cont_mao +=1;
-                            }
+            case JOGANDO:
+                switch (turnState) {
+                    case TURNO_JOGADOR:
+                        if (arrasto.id != 0){ //Altera a posicao de uma carta que esta sendo arrastada
+                            arrasto.cordenada = (Vector2){mousePosition.x-20, mousePosition.y-30};
                         }
-                    }
-                    for (int i=0;i<MAX_HAND; i++){
-                        if (CheckCollisionPointRec(GetMousePosition(), mao.posicao[i].posicao)){
-                            if (mao.posicao[i].vazia == false){
-                                pull = true;
-                                mao.posicao[i].carregada = (Cartas){0};
-                                mao.posicao[i].vazia == true;
+                        //--LMB--
+                        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
+                            if(quantPuxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
+                                if (CheckCollisionPointRec(GetMousePosition(), deck.area) && compradoTurno == false){ //Checa a colisão entre o mouse e deck
+                                    for(int i=0; i<MAX_HAND; i++){ 
+                                        if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
+                                            Carta disponivel;
+                                            int j;
+                                            for(j = 0; j<MAX_DECK; j++){
+                                                if(deck.cartas[j].id != 0){
+                                                    disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
+                                                    break;
+                                                }
+                                            }
+                                            mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
+                                            deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
+                                            mao[i].vazia = false; //A posicao da mao fica cheia
+                                            quantPuxada += 1;
+                                            compradoTurno = true;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
-                        }
-                    }
-                    if (pull){
-                        for(int i = 0; i<MAX_POSITION; i++){
-                            if((CheckCollisionPointRec(GetMousePosition(), areas[i].posicao))){
-                                if(areas[i].vazia == true){
-                                    pull = false;
-                                    areas[i].carregada = mao.posicao[test].carregada;
-                                    areas[i].vazia = false;
+                            for (int i=0;i<MAX_HAND; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
+                                if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
+                                    if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
+                                        arrasto = mao[i].carregada;
+                                        mao[i].carregada = (Carta){0};
+                                        mao[i].vazia = true;
+                                    }
+                                }
+                            }
+                            if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
+                                for(int i = 0; i<MAX_POSITION; i++){
+                                    if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))){ 
+                                        if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
+                                            campos[i].carregada = arrasto;
+                                            arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
+                                            campos[i].vazia = false; //Preenche a posicao
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-
-                // Clique com botão direito
-                if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-                    for(int i = 0; i<MAX_POSITION; i++){
-                        if((CheckCollisionPointRec(GetMousePosition(), areas[i].posicao))){
-                            areas[i].carregada.hp -= 1000;
-                            if(areas[i].carregada.hp <= 0 && areas[i].carregada.id != 0){
-                                cemiterio.cemiterio[cemit_num] = areas[i].carregada;
-                                areas[i].vazia = true;
-                                areas[i].carregada = (Cartas){0};
-                                cemit_num += 1;
-                                close = false;
-                            }
-                        }
-                    }
-                }
-
-                //Clique com o scroll
-                if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)){
-                    if (!gui_cemit){
-                        for(int i = 0; i<MAX_POSITION; i++){
-                            if(areas[i].vazia == false){
-                                if((CheckCollisionPointRec(GetMousePosition(), areas[i].posicao))){
-                                    close = true;
-                                    id_close = i;
+                    break;
+                    case TURNO_INIMIGO:
+                        //--RMB--
+                        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+                            for(int i = 0; i<MAX_POSITION; i++){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
+                                if((CheckCollisionPointRec(GetMousePosition(), campos[i].area) && campos[i].vazia == false)){
+                                    campos[i].carregada.hp -= 1000;
                                 }
-                            }
+                            }       
                         }
-                    }
-                }
-            //----------------------------------------------------------------------------------
-            // GUI da mão
-                if (IsKeyPressed(KEY_Q)){
-                    gui_hand = !gui_hand;
-                    close = false;
-                }
-
-            //----------------------------------------------------------------------------------
-
-            //----------------------------------------------------------------------------------
-            // GUI do cemterio                
-                //Clique com a tecla T
-                if (IsKeyPressed(KEY_T)){
-                    gui_cemit = !gui_cemit;
-                    close = false;
-                }
-                
-                if (gui_cemit){
-                    //Clique com a flecha para cima
-                    if (IsKeyPressed(KEY_UP)){
-                        if (fator_elevar < cemit_num -1){
-                            fator_elevar += 1;
-                        }
-                    }
-                    //CLique com a felcha para baixo
-                    if (IsKeyPressed(KEY_DOWN)){
-                        if (fator_elevar > 0){
-                            fator_elevar -=1;
-                        }    
-                    }
-                }
-            //----------------------------------------------------------------------------------
-
-                // Hovering
-                vis_cemit = false;
-                vis_deck = false;
-                if((CheckCollisionPointRec(GetMousePosition(), cemiterio.cemit_area))){
-                    vis_cemit = true;
-                } else if((CheckCollisionPointRec(GetMousePosition(), deck.deck_area))){
-                    vis_deck = true;
-                }
-                break;
-                
-        }
-            // 2. Rendering
-        //--------------------------------------------------------------------------
-        BeginDrawing();
-            ClearBackground(WHITE);
-                
-            switch(estado) {
-                //Interface de menu
-                case MENU: {
-                    //Interface Menu
-                    DrawText("CARD GAME", screenWidth/2-screenWidth/4.5, screenHeight/16,60, BLACK);
-                    DrawRectangle(jogar.x, jogar.y, jogar.width,jogar.height, BLACK);
-                    DrawText("JOGAR",screenWidth/2-screenWidth/16,jogar.y+jogar.y/16,30, WHITE);
-                    DrawRectangle(fechar.x, fechar.y, fechar.width,fechar.height, BLACK);
-                    DrawText("FECHAR",screenWidth/2-screenWidth/13.5,fechar.y+fechar.y/20,30, WHITE);
-
                     break;
                 }
+                //--------------------------------------------------------------------------
+                // Global features    
+                //--------------------------------------------------------------------------    
 
-                //Interface de campo
-                case TURNO: {
-                    // Interface Deck
-                    if(vis_deck){
-                        char deckText[64];
-                        snprintf(deckText, sizeof(deckText), "DECK: %d/%d", MAX_DECK-carta_num, MAX_DECK);
-                        DrawText(deckText, 6.5*screenWidth/8, 20, 20, BLACK);
+                //--LMB--
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Alterna entre os turnos ao clicar no botao de alterar turno
+                    if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
+                        if(turnState == TURNO_JOGADOR){
+                            turnState = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
+                        } else {
+                            turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
+                            compradoTurno = false;  //Me permite comprar outra carta 
+                        }    
                     }
+                }    
+                //--Q--
+                if(IsKeyPressed(KEY_Q)){ //Altera a visibilidade da mao
+                    alterMao = (!alterMao);     
+                }
 
-                    // Interface Cemiterio
-                    if(vis_cemit){
-                        char cemitText[64];
-                        snprintf(cemitText, sizeof(cemitText), "CEMITERIO: %d/%d", cemit_num, MAX_CEMITERIO);
-                        DrawText(cemitText, 6*screenWidth/8, 20, 20, BLACK);
-                    }
-
-                    // Desenha a área do Deck e Cemiterio
-                    DrawRectangle(deck.deck_area.x, deck.deck_area.y, deck.deck_area.width, deck.deck_area.height, GREEN);
-                    DrawRectangle(cemiterio.cemit_area.x, cemiterio.cemit_area.y, cemiterio.cemit_area.width, cemiterio.cemit_area.height, BLACK);
-
-                    // Desenha as posições do campo e as cartas carregadas nelas
-                    for(int i=0;i<MAX_POSITION;i++){
-                        DrawRectangle(areas[i].posicao.x, areas[i].posicao.y, areas[i].posicao.width, areas[i].posicao.height, RED);
-                        if(areas[i].vazia == false){
-                            DrawTexture(areas[i].carregada.textura, areas[i].posicao.x, areas[i].posicao.y, WHITE);
-                        }
-                    }
-
-                    // Desenha a carta sendo arrastada (se houver)
-                    if (pull){
-                        DrawTexture(deck.deck[carta_num].textura, deck.deck[carta_num].posicao.x, deck.deck[carta_num].posicao.y, WHITE);
-                    }
-                    //Desenha a carta de foco
-                    if(close == true && areas[id_close].vazia == false){
-                        DrawRectangle(0, 0, screenWidth, screenHeight, (Color){0, 0, 0, 128});
-                        Texture2D texGrande = areas[id_close].carregada.textura;
-                        Rectangle source = { 0.0f, 0.0f, (float)texGrande.width, (float)texGrande.height };
-                        Rectangle pos = { (float)screenWidth/2 - 80, (float)screenHeight/2 - 120, 160, 240 };
-                        Vector2 normal = { 0, 0 };
-                        DrawTexturePro(texGrande, source, pos, normal, 0.0f, WHITE);            
-                    }
-                    //GUI da hand
-                    if (gui_hand){
-                        DrawRectangle(screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/4, screenWidth/2+10, screenHeight/6, YELLOW);
-                        for(int i=0; i<cont_mao; i++){
-                            DrawRectangle(mao.posicao[i].posicao.x, mao.posicao[i].posicao.y, 40, 40, YELLOW);
-                            DrawTexture(mao.posicao[i].carregada.textura, mao.posicao[i].posicao.x, mao.posicao[i].posicao.y, WHITE);
-                        }
-
-                    }
-                    //Desenho da GUI do cemiterio
-                    if(gui_cemit){
-                        DrawRectangle(0, 0, screenWidth, screenHeight, (Color){0, 0, 0, 128});
-                        DrawRectangle(screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/4, screenWidth/2+10, screenHeight/2, YELLOW);
-                        DrawText("Cemiterio", screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/2.5, 60, BLACK);
-                        int max_coluna;
-                        for(int i=0; i<20; i++){
-                            int linha =(screenHeight/2-screenHeight/4 + screenHeight/8*(i-1)) + 5;
-                            if (linha >= screenHeight/2 + screenHeight/4){
-                                max_coluna = i-1;
+                //Cards Updates
+                for (int i=0; i<MAX_POSITION; i++){
+                    if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
+                        for(int j = 0; j<MAX_DECK; j++){
+                            if(cemiterio.cartas[j].id == 0){
+                                cemiterio.cartas[j] = campos[i].carregada; //Carta morta é atribuida ao cemiterio
+                                campos[i].carregada = (Carta){0}; //A posicao dela e limpa
+                                campos[i].vazia = true; //A posicao e definida como vazia
+                                quantMorta += 1;
                                 break;
                             }
                         }
-                        int row = 1;
-                        int max_fileira;
-                        int max_for = fator_elevar + 36;
-                        if(max_for > cemit_num){
-                            max_for = cemit_num;
-                        } 
-                        for(int i=0 + fator_elevar;i<max_for; i++){ 
-                            int l = i - fator_elevar;
-                            if(screenWidth/2*row - 45*(i-fator_elevar) <=0){
-                                max_fileira = i - fator_elevar;
-                                row += 1;
+                        break;
+                    }
+                }  
+            break;    
+        }   
+    
+        //--------------------------------------------------------------------------
+        // 2. Rendering
+        //--------------------------------------------------------------------------
+        BeginDrawing();
+            ClearBackground(WHITE);
+            switch(gameState){
+                case MENU:
+                    //Fundo
+                    DrawRectangleGradientV(0, 0, screenWidth, screenHeight, (Color){20, 25, 35, 255}, (Color){10, 12, 18, 255});
+
+                    //Deconracao
+                    Rectangle cardDeco1 = {screenWidth/2 - 220, screenHeight/2 - 130, 80, 120};
+                    DrawRectanglePro(cardDeco1, (Vector2){ 40, 60 }, -15.0f, (Color){0, 50, 70, 100});
+                    DrawRectangleLinesEx((Rectangle){cardDeco1.x - 40, cardDeco1.y - 60, cardDeco1.width, cardDeco1.height}, 2, (Color){80, 100, 130, 120});
+
+                    Rectangle cardDeco2 = {screenWidth/2 + 220, screenHeight/2 - 130, 80, 120};
+                    DrawRectanglePro(cardDeco2, (Vector2){40, 60}, 15.0f, (Color){40, 50, 70, 100});
+                    DrawRectangleLinesEx((Rectangle){cardDeco2.x - 40, cardDeco2.y - 60, cardDeco2.width, cardDeco2.height}, 2, (Color){80, 100, 130, 120});
+
+                    //Texto
+                    const char *titulo = "DYCKSON ADVENTURE";
+                    const char *subtitulo = "CARD BATTLE GAME";
+                    int larguraTitulo = MeasureText(titulo, 48);
+                    int larguraSub = MeasureText(subtitulo, 18);
+
+                    DrawText(titulo, ((screenWidth / 2) - (larguraTitulo / 2)) + 3, (screenHeight/6) + 3, 48, (Color){0, 0, 0, 180});
+                    DrawText(titulo, ((screenWidth / 2) - (larguraTitulo / 2)), (screenHeight/6), 48, GOLD);
+                    DrawText(subtitulo, (screenWidth / 2) - (larguraSub / 2), (screenHeight/6) + 55, 18, LIGHTGRAY);
+
+                    //hover
+                    bool hoverJogar = CheckCollisionPointRec(mousePosition, jogar);
+                    bool hoverFechar = CheckCollisionPointRec(mousePosition, fechar);
+
+                    //Botoes
+                    Color corBotaoJogar;
+                    Color corBordaJogar;
+                    if (hoverJogar) {
+                        corBotaoJogar = (Color){ 46, 117, 89, 255 };  
+                        corBordaJogar = GREEN;
+                    } else {
+                        corBotaoJogar = (Color){ 30, 80, 60, 255 };    
+                        corBordaJogar = (Color){ 40, 160, 100, 255 };
+                    }
+                    DrawRectangleRounded((Rectangle){jogar.x + 4, jogar.y + 4, jogar.width, jogar.height}, 0.25f, 4, (Color){0, 0, 0, 120});
+                    DrawRectangleRounded(jogar, 0.25f, 4, corBotaoJogar);
+                    DrawRectangleRoundedLinesEx(jogar, 0.25f, 4, 2.0f, corBordaJogar);
+                    const char *txtJogar = "JOGAR";
+                    int txtJogarWidth = MeasureText(txtJogar, 24);
+                    DrawText(txtJogar, jogar.x + (jogar.width / 2) - (txtJogarWidth / 2), jogar.y + (jogar.height / 2) - 12, 24, WHITE);
+
+                    Color corBotaoFechar;
+                    Color corBordaFechar;
+
+                    if (hoverFechar) {
+                        corBotaoFechar = (Color){ 140, 40, 50, 255 }; 
+                        corBordaFechar = RED;
+                    } else {
+                        corBotaoFechar = (Color){ 90, 25, 35, 255 };   
+                        corBordaFechar = (Color){ 180, 50, 60, 255 };
+                    }
+                    DrawRectangleRounded((Rectangle){fechar.x + 4, fechar.y + 4, fechar.width, fechar.height}, 0.25f, 4, (Color){0, 0, 0, 120});
+                    DrawRectangleRounded(fechar, 0.25f, 4, corBotaoFechar);
+                    DrawRectangleRoundedLinesEx(fechar, 0.25f, 4, 2.0f, corBordaFechar);
+                    const char *txtFechar = "FECHAR";
+                    int txtFecharWidth = MeasureText(txtFechar, 24);
+                    DrawText(txtFechar, fechar.x + (fechar.width / 2) - (txtFecharWidth / 2), fechar.y + (fechar.height / 2) - 12, 24, WHITE);
+                break;
+
+                case JOGANDO:
+                    DrawRectangle(deck.area.x, deck.area.y, deck.area.width, deck.area.height, GREEN); //Desenha a area do deck
+                    DrawRectangle(cemiterio.area.x, cemiterio.area.y, cemiterio.area.width, cemiterio.area.height, BLACK); //Desenha a area do cemiterio
+                    DrawRectangle(alterTurno.x, alterTurno.y, alterTurno.width, alterTurno.height, BLUE);
+
+                    if(alterMao){
+                        DrawRectangle(screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/4, screenWidth/2+10, screenHeight/6, YELLOW); //Desenha a mao
+                        for(int i=0; i<6; i++){
+                            DrawRectangle(mao[i].area.x, mao[i].area.y, 40, 60, YELLOW); //Desenha as areas
+                            DrawRectangleLines(mao[i].area.x, mao[i].area.y, 40, 60, BLACK); //Desenha um contorno
+                            if(mao[i].vazia == false){ // Se a posicao tiver cheia, desenha a carta que a ocupa
+                                DrawTexture(mao[i].carregada.textura, mao[i].area.x, mao[i].area.y, WHITE);
                             }
-                            if(row != 1){
-                                l -= max_fileira;
-                            }
-                            DrawTexture(cemiterio.cemiterio[i].textura, (screenWidth/2-screenWidth/4+(45*l)) + 5, (screenHeight/2-screenHeight/4 + screenHeight/8*(row-1)) + 5, WHITE);
+                        }
+                        char deckText[64]; //Desenho dos textos de informacoes de qnts de cartas no deck e cemiterio
+                        char cemiterioText[64];
+                        snprintf(cemiterioText, sizeof(cemiterioText), "CEMITERIO: %d/%d", quantMorta, MAX_DECK);
+                        snprintf(deckText, sizeof(deckText), "DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK);
+                        DrawText(deckText, 6.5*screenWidth/8, 20, 20, BLACK);
+                        DrawText(cemiterioText, 6*screenWidth/8, 40, 20, BLACK);
+                    }   
+
+                    for(int i=0;i<MAX_POSITION;i++){
+                        DrawRectangle(campos[i].area.x, campos[i].area.y, campos[i].area.width, campos[i].area.height, GRAY); // Desenha as posicoes do campo
+                        if(campos[i].vazia == false){ //Desenha as cartas caso haja alguma
+                            DrawTexturePro(campos[i].carregada.textura, (Rectangle){ 0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height }, (Rectangle){ campos[i].area.x, campos[i].area.y, 80.0f, 120.0f }, (Vector2){ 0, 0 }, 0.0f, WHITE);
                         }
                     }
-                    break;
-                }    
+
+                    if (arrasto.id != 0){ //Desenha a carta sendo arrastada
+                        DrawTexture(arrasto.textura, arrasto.cordenada.x, arrasto.cordenada.y, WHITE);
+                    }
+            
+                    //Cards Info
+                    char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
+                    char vidaCarta[16];
+                    char ataqueCarta[16];
+                    Carta *cartaFocada = NULL;
+                    for (int i=0; i<MAX_POSITION; i++){
+                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                            if (campos[i].vazia == false){
+                                cartaFocada = &campos[i].carregada;
+                            }
+                        }
+                    }
+                    for (int i=0; i<MAX_HAND; i++){
+                        if (CheckCollisionPointRec(GetMousePosition(), mao[i].area)&& alterMao){
+                            if (mao[i].vazia == false){
+                                cartaFocada = &mao[i].carregada;
+                            }
+                        }
+                    }
+                    if (cartaFocada != NULL){
+                        snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %d", cartaFocada->id);
+                        snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", cartaFocada->hp);
+                        snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", cartaFocada->atk);
+                        DrawText(nomeCarta, 5, 5, 20, BLACK);
+                        DrawText(vidaCarta, 5, 25, 20, BLACK);
+                        DrawText(ataqueCarta, 5, 45, 20, BLACK);
+                    }    
+                    
+                    char turnoText[64]; //Dsenha em que turno o jogo esta
+                    if (turnState == TURNO_JOGADOR) {
+                        snprintf(turnoText, sizeof(turnoText), "SEU TURNO");
+                    } else {
+                        snprintf(turnoText, sizeof(turnoText), "TURNO INIMIGO");
+                    }
+
+                    DrawText(turnoText, (screenWidth / 2) - (MeasureText(turnoText, 24) / 2), 20, 24, BLACK);
+                break;    
             }
-            //Desenha a trail
-            //DrawRectangle(areaRec.x, areaRec.y, areaRec.width, areaRec.height, BLACK);
         EndDrawing();
     }
 
-    //------------------------------------------------------------------------------    
-    // De-Initialization / Unload Resources
-    //------------------------------------------------------------------------------
-    for(int i=0;i<MAX_DECK;i++){
-        UnloadTexture(deck.deck[i].textura);
-    }     
-
+    UnloadTexture(textura);
+    UnloadTexture(textura2);
     CloseWindow();
     return 0;
 }
