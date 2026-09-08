@@ -261,19 +261,30 @@ int main(void){
             char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
             char vidaCarta[16];
             char ataqueCarta[16];
+            Carta *cartaFocada = NULL;
             for (int i=0; i<MAX_POSITION; i++){
-            if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
-                if (campos[i].vazia == false){
-                    snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %d", campos[i].carregada.id);
-                    snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", campos[i].carregada.hp);
-                    snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", campos[i].carregada.atk);
-                    DrawText(nomeCarta, 5, 5, 20, BLACK);
-                    DrawText(vidaCarta, 5, 25, 20, BLACK);
-                    DrawText(ataqueCarta, 5, 45, 20, BLACK);
+                if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                    if (campos[i].vazia == false){
+                        cartaFocada = &campos[i].carregada;
                     }
                 }
             }
-
+            for (int i=0; i<MAX_HAND; i++){
+                if (CheckCollisionPointRec(GetMousePosition(), mao[i].area)&& alterMao){
+                    if (mao[i].vazia == false){
+                        cartaFocada = &mao[i].carregada;
+                    }
+                }
+            }
+            if (cartaFocada != NULL){
+                snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %d", cartaFocada->id);
+                snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", cartaFocada->hp);
+                snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", cartaFocada->atk);
+                DrawText(nomeCarta, 5, 5, 20, BLACK);
+                DrawText(vidaCarta, 5, 25, 20, BLACK);
+                DrawText(ataqueCarta, 5, 45, 20, BLACK);
+            }    
+            
             char turnoText[64]; //Dsenha em que turno o jogo esta
             if (state == TURNO_JOGADOR) {
                 snprintf(turnoText, sizeof(turnoText), "SEU TURNO");
