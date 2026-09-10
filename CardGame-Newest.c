@@ -5,13 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
 #define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
-#define MAX_HAND 6 //Define o maximo de cartas na mao
-#define MAX_POSITION 6//Define o maximo de posicoes
+#define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -55,7 +55,7 @@ int main(void){
     //------------------------------------------------------------------------------
     const int screenWidth = 800; //Define a largura da tela
     const int screenHeight = 450; //Define a altura da tela
-    InitWindow(screenWidth, screenHeight, "Dyckson Guloso Adventure"); //Inicializa a janela
+    InitWindow(screenWidth, screenHeight, "a"); //Inicializa a janela
     SetTargetFPS(60); //Define o FPS  
     
     //------------------------------------------------------------------------------
@@ -63,21 +63,22 @@ int main(void){
     //------------------------------------------------------------------------------
     Deck deck; //Instancia o Deck
     deck.area = (Rectangle){screenWidth-50, screenHeight-50, 50, 50}; //Define a area que o deck ocupara
-    Image imagem1 = LoadImage("images/azul.png"); //Define a imagem 
-    Image imagem2 = LoadImage("images/verde.png"); 
+    Image imagem1 = LoadImage("resources/azul.png"); //Define a imagem 
+    Image imagem2 = LoadImage("resources/verde.png"); 
     ImageResize(&imagem1, 40, 60); //Modifica o tamanho da imagem
-    ImageResize(&imagem2, 40, 60); //
+    ImageResize(&imagem2, 40, 60); 
     Texture2D textura = LoadTextureFromImage(imagem1); //Atribui a imagem a uma textura
     Texture2D textura2 = LoadTextureFromImage(imagem2);
     for(int i=0;i<MAX_DECK;i++){ //Percorre as cartas abribuindo uma textura e id
         if(i%2 == 0){
             deck.cartas[i].textura = textura;
+            deck.cartas[i].atk = 1000;
         } else{
             deck.cartas[i].textura = textura2;
+            deck.cartas[i].atk = 2000;
         }
         deck.cartas[i].id = i+1;
         deck.cartas[i].hp = 2000;
-        deck.cartas[i].atk = 1000;
     }
     UnloadImage(imagem1); //Descarrega as imagens da memoria
     UnloadImage(imagem2); 
@@ -87,23 +88,35 @@ int main(void){
     //------------------------------------------------------------------------------    
     Posicao mao[6] = {0}; //Instancia a mao
     for(int i=0; i<6; i++){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
-        mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (56.6*i)+45.3, screenHeight/2-screenHeight/4+7.5, 40, 60};
+        mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (56.6*i)+45.3, screenHeight/2+screenHeight/64 +7.5, 40, 60};
         mao[i].vazia = true;
     }
     int quantPuxada = 0; //Intancia a variavel que conta qnts vezes uma carta foi puxada
     int quantMorta = 0; //Variavel q mostra qnts cartas morreram
     Carta arrasto = {0};
+    Carta *ataco = NULL;
     bool alterMao = false; //Bool para controlar a visibilidade da mao
     bool compradoTurno = false; //Flag para controlar a comprar por rodada
+    bool atacadoTurno = false; //Flag para controlar o ataque por rodada
+    bool atacadoTurnoEnemy = false;
     bool fecharJogo = false;
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
     for(int i = 0; i<MAX_POSITION; i++){
         campos[i].area.x = i*screenWidth/MAX_POSITION;
-        campos[i].area.y = 3*screenHeight/4;
+        campos[i].area.y = 2.8*screenHeight/4;
         campos[i].area.width = 80;
         campos[i].area.height =120;
         campos[i].vazia = true;
+    }
+
+    Posicao camposInimigos[MAX_POSITION];
+    for(int i = 0; i<MAX_POSITION; i++){
+        camposInimigos[i].area.x = i*screenWidth/MAX_POSITION;
+        camposInimigos[i].area.y = 0.7  *screenHeight/4;
+        camposInimigos[i].area.width = 80;
+        camposInimigos[i].area.height =120;
+        camposInimigos[i].vazia = true;
     }
 
     Deck cemiterio; //Estrutura do cemiterio
@@ -117,8 +130,10 @@ int main(void){
     Rectangle jogar = {screenWidth/2 - 110, screenHeight/2 + 20, 220, 50}; //Cria o botao de iniciar o jogo
     Rectangle fechar = {screenWidth/2 - 110, screenHeight/2 + 90, 220, 50}; //Cria o botao para fechar o jogo
 
-    for(int i=0; i<MAX_HAND; i++){ //Inicializa o deck com 6 cartas iniciais
+    for(int i=0; i<MAX_POSITION; i++){ //Inicializa o deck com 6 cartas iniciais
         mao[i].carregada = deck.cartas[quantPuxada]; 
+        camposInimigos[i].carregada = deck.cartas[quantPuxada];
+        camposInimigos[i].vazia = false;
         deck.cartas[quantPuxada] = (Carta){0};        
         mao[i].vazia = false;
         quantPuxada += 1;
@@ -148,7 +163,7 @@ int main(void){
                         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
                             if(quantPuxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
                                 if (CheckCollisionPointRec(GetMousePosition(), deck.area) && compradoTurno == false){ //Checa a colisão entre o mouse e deck
-                                    for(int i=0; i<MAX_HAND; i++){ 
+                                    for(int i=0; i<MAX_POSITION; i++){ 
                                         if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
                                             Carta disponivel;
                                             int j;
@@ -168,7 +183,7 @@ int main(void){
                                     }
                                 }
                             }
-                            for (int i=0;i<MAX_HAND; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
+                            for (int i=0;i<MAX_POSITION; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
                                     if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
                                         arrasto = mao[i].carregada;
@@ -177,6 +192,26 @@ int main(void){
                                     }
                                 }
                             }
+                            for (int i=0; i<MAX_POSITION; i++){
+                                if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                                    if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true){
+                                        ataco = &campos[i].carregada;
+                                    }
+                                }
+                            }
+
+                            if (ataco != NULL){
+                                for (int i=0; i<MAX_POSITION; i++){
+                                    if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){
+                                        if (camposInimigos[i].vazia == false){
+                                            camposInimigos[i].carregada.hp -= ataco->atk;
+                                            ataco = NULL;
+                                            atacadoTurno = true;
+                                        }
+                                    }
+                                }
+                            }
+
                             if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
                                 for(int i = 0; i<MAX_POSITION; i++){
                                     if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))){ 
@@ -200,6 +235,39 @@ int main(void){
                                 }
                             }       
                         }
+
+                        if (atacadoTurnoEnemy == false){
+                            bool meuOcupado = false;
+                            bool inimigoOcupado = false;
+                            for (int i = 0; i < 6; i++) {
+                                if (campos[i].vazia == false){
+                                    meuOcupado= true;
+                                }
+                                if (camposInimigos[i].vazia == false){
+                                    inimigoOcupado = true;
+                                }
+                            }
+                            if (meuOcupado && inimigoOcupado){
+                                srand(time(NULL));
+                                int escolhaMeu;
+                                int escolhaInimigo;
+                                while (true){
+                                    escolhaMeu = rand() %6;
+                                    if(campos[escolhaMeu].vazia == false){
+                                        break;
+                                    }
+                                }
+                                while (true){
+                                    escolhaInimigo = rand() %6;
+                                    if(camposInimigos[escolhaInimigo].vazia == false){
+                                        break;
+                                    }
+                                }
+                                campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk;
+                                atacadoTurnoEnemy = true;
+                            }
+                        }
+
                     break;
                 }
                 //--------------------------------------------------------------------------
@@ -211,9 +279,11 @@ int main(void){
                     if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
                         if(turnState == TURNO_JOGADOR){
                             turnState = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
+                            atacadoTurnoEnemy = false;
                         } else {
                             turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
-                            compradoTurno = false;  //Me permite comprar outra carta 
+                            compradoTurno = false;  //Me permite comprar outra carta
+                            atacadoTurno = false;
                         }    
                     }
                 }    
@@ -234,6 +304,11 @@ int main(void){
                                 break;
                             }
                         }
+                        break;
+                    }
+                    if (camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
+                        camposInimigos[i].carregada = (Carta){0}; //A posicao dela e limpa
+                        camposInimigos[i].vazia = true; //A posicao e definida como vazia
                         break;
                     }
                 }  
@@ -263,7 +338,7 @@ int main(void){
                     DrawRectangleLinesEx((Rectangle){cardDeco2.x - 40, cardDeco2.y - 60, cardDeco2.width, cardDeco2.height}, 2, (Color){80, 100, 130, 120});
 
                     //Texto
-                    const char *titulo = "DYCKSON ADVENTURE";
+                    const char *titulo = "SEM NOME";
                     const char *subtitulo = "CARD BATTLE GAME";
                     DrawText(titulo, ((screenWidth / 2) - (MeasureText(titulo, 48) / 2)) + 3, (screenHeight/6) + 3, 48, (Color){0, 0, 0, 180});
                     DrawText(titulo, ((screenWidth / 2) - (MeasureText(titulo, 48) / 2)), (screenHeight/6), 48, GOLD);
@@ -334,11 +409,20 @@ int main(void){
                             DrawTexturePro(campos[i].carregada.textura, (Rectangle){0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height}, (Rectangle){campos[i].area.x, campos[i].area.y, 80.0f, 120.0f}, (Vector2){0, 0}, 0.0f, WHITE);
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
                         }
+
+                        if (camposInimigos[i].vazia) {
+                            DrawRectangleRounded(camposInimigos[i].area, 0.12f, 6, (Color){25, 35, 48, 160});
+                            DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
+                        } else {
+                            DrawRectangleRounded(camposInimigos[i].area, 0.12f, 6, (Color){40, 80, 140, 255});
+                            DrawTexturePro(camposInimigos[i].carregada.textura, (Rectangle){0, 0, camposInimigos[i].carregada.textura.width, camposInimigos[i].carregada.textura.height}, (Rectangle){camposInimigos[i].area.x, camposInimigos[i].area.y, 80.0f, 120.0f}, (Vector2){0, 0}, 0.0f, WHITE);
+                            DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
+                        }
                     }
 
                     //Mao
                     if (alterMao) {
-                        for (int i = 0; i < MAX_HAND; i++) {
+                        for (int i = 0; i < MAX_POSITION; i++) {
                             DrawRectangleRounded(mao[i].area, 0.12f, 6, (Color){20, 28, 40, 180});
                             DrawRectangleRoundedLines(mao[i].area, 0.12f, 6, (Color){140, 180, 240, 100});
                             if (!mao[i].vazia) {
@@ -365,6 +449,13 @@ int main(void){
                     }
 
                     //Cards Info
+                    char ataque[32];
+                    if (ataco != NULL){
+                        snprintf(ataque, sizeof(ataque), "ATK: %d", ataco->atk);
+                        DrawText(ataque, 140, 10, 20, (Color){255, 0, 0, 155});
+                    }
+
+
                     char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
                     char vidaCarta[16];
                     char ataqueCarta[16];
@@ -376,7 +467,14 @@ int main(void){
                             }
                         }
                     }
-                    for (int i=0; i<MAX_HAND; i++){
+                    for (int i=0; i<MAX_POSITION; i++){
+                        if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){
+                            if (camposInimigos[i].vazia == false){
+                                cartaFocada = &camposInimigos[i].carregada;
+                            }
+                        }
+                    }
+                    for (int i=0; i<MAX_POSITION; i++){
                         if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
                             if (mao[i].vazia == false){
                                 cartaFocada = &mao[i].carregada;
