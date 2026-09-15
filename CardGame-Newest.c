@@ -110,7 +110,7 @@ int main(void){
         campos[i].vazia = true;
     }
 
-    Posicao camposInimigos[MAX_POSITION];
+    Posicao camposInimigos[MAX_POSITION]; //Instancia as posicoes do campo inimigo
     for(int i = 0; i<MAX_POSITION; i++){
         camposInimigos[i].area.x = i*screenWidth/MAX_POSITION;
         camposInimigos[i].area.y = 0.7  *screenHeight/4;
@@ -200,11 +200,11 @@ int main(void){
                                 }
                             }
 
-                            if (ataco != NULL){
-                                for (int i=0; i<MAX_POSITION; i++){
-                                    if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){
+                            if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
+                                for (int i=0; i<MAX_POSITION; i++){ 
+                                    if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
                                         if (camposInimigos[i].vazia == false){
-                                            camposInimigos[i].carregada.hp -= ataco->atk;
+                                            camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
                                             ataco = NULL;
                                             atacadoTurno = true;
                                         }
@@ -236,10 +236,10 @@ int main(void){
                             }       
                         }
 
-                        if (atacadoTurnoEnemy == false){
+                        if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
                             bool meuOcupado = false;
                             bool inimigoOcupado = false;
-                            for (int i = 0; i < 6; i++) {
+                            for (int i = 0; i < 6; i++) { //Verifica se as posicoes dos campos estao ocupadas
                                 if (campos[i].vazia == false){
                                     meuOcupado= true;
                                 }
@@ -247,24 +247,24 @@ int main(void){
                                     inimigoOcupado = true;
                                 }
                             }
-                            if (meuOcupado && inimigoOcupado){
+                            if (meuOcupado && inimigoOcupado){ //Se no minimo uma posicao de cada lado estiver ocupada, ele ataca um inimigo aleatorio com uma carta aleatoria
                                 srand(time(NULL));
                                 int escolhaMeu;
                                 int escolhaInimigo;
                                 while (true){
-                                    escolhaMeu = rand() %6;
-                                    if(campos[escolhaMeu].vazia == false){
+                                    escolhaMeu = rand() %6; //Sorteia uma posicao
+                                    if(campos[escolhaMeu].vazia == false){ //Verifica se a posicao sorteada esta ocupada
                                         break;
                                     }
                                 }
                                 while (true){
-                                    escolhaInimigo = rand() %6;
-                                    if(camposInimigos[escolhaInimigo].vazia == false){
+                                    escolhaInimigo = rand() %6; //Sorteia uma posicao
+                                    if(camposInimigos[escolhaInimigo].vazia == false){ //Verifica se a posicao sorteada esta ocupada
                                         break;
                                     }
                                 }
-                                campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk;
-                                atacadoTurnoEnemy = true;
+                                campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
+                                atacadoTurnoEnemy = true; //Encerra o ataque inimigo
                             }
                         }
 
@@ -297,7 +297,7 @@ int main(void){
                     if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
                         for(int j = 0; j<MAX_DECK; j++){
                             if(cemiterio.cartas[j].id == 0){
-                                cemiterio.cartas[j] = campos[i].carregada; //Carta morta é atribuida ao cemiterio
+                                cemiterio.cartas[j] = campos[i].carregada; //Carta morta e atribuida ao cemiterio
                                 campos[i].carregada = (Carta){0}; //A posicao dela e limpa
                                 campos[i].vazia = true; //A posicao e definida como vazia
                                 quantMorta += 1;
