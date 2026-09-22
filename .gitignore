@@ -1,6 +1,7 @@
 # Ignorar todos os arquivos de tipos:
 *.exe
 *.png
+!resources/*.png
 bin/
 obj/
 testes/
