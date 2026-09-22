@@ -63,8 +63,8 @@ int main(void){
     //------------------------------------------------------------------------------
     Deck deck; //Instancia o Deck
     deck.area = (Rectangle){screenWidth-50, screenHeight-50, 50, 50}; //Define a area que o deck ocupara
-    Image imagem1 = LoadImage("resources/azul.png"); //Define a imagem 
-    Image imagem2 = LoadImage("resources/verde.png"); 
+    Image imagem1 = LoadImage("resources/mago_negro.png"); //Define a imagem 
+    Image imagem2 = LoadImage("resources/maga_negra.png"); 
     ImageResize(&imagem1, 40, 60); //Modifica o tamanho da imagem
     ImageResize(&imagem2, 40, 60); 
     Texture2D textura = LoadTextureFromImage(imagem1); //Atribui a imagem a uma textura
