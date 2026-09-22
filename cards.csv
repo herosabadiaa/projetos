@@ -2,7 +2,7 @@ nome,hp,atk,textura
 Dragao Branco de Olhos Azuis,2500,3000,resources/dragao_branco_de_olhos_azuis.png
 Mago Negro,2100,2500,resources/mago_negro.png
 Dragao Negro de Olhos Vermelhos,2000,2400,resources/dragao_negro_de_olhos_vermelhos.png
-Cranio Demoniaco Invocado,1200,2500,resources/cranio_demoniaco_invocado.png
+Rei Caveira,1200,2500,resources/rei_caveira.png
 Guardiao Celta,1200,1400,resources/guardiao_celta.png
 Gaia o Cavaleiro Feroz,2100,2300,resources/gaia_o_cavaleiro_feroz.png
 Maldicao do Dragao,1500,2000,resources/maldicao_do_dragao.png
@@ -26,7 +26,6 @@ Elfa Gemea,900,1900,resources/elfa_gemea.png
 Gorila Descontrolado,1000,2000,resources/gorila_descontrolado.png
 Capitao Saqueador,400,1200,resources/capitao_saqueador.png
 Rainha dos Insetos,2400,2200,resources/rainha_dos_insetos.png
-Grande Mariposa,2500,2600,resources/grande_mariposa.png
 Jarra Cibernetica,900,900,resources/jarra_cibernetica.png
 Sangan,600,1000,resources/sangan.png
 Bruxa da Floresta Negra,1200,1100,resources/bruxa_da_floresta_negra.png
@@ -38,10 +37,6 @@ Freed o General Incomparavel,1700,2300,resources/freed_o_general_incomparavel.pn
 Universo Exarion,1500,2000,resources/universo_exarion.png
 Maga da Fe,400,300,resources/maga_da_fe.png
 Parshath Cavaleiro Aereo,1500,1900,resources/parshath_cavaleiro_aereo.png
-Mago do Comando do Caos,1900,2400,resources/mago_do_comando_do_caos.png
-Soldado do Luar Negro,2500,3000,resources/soldado_do_luar_negro.png
-Feiticeiro do Caos,2000,2300,resources/feiticeiro_do_caos.png
-Dragao Imperador do Caos Enviado do Fim,2000,3000,resources/dragao_imperador_do_caos_enviado_do_fim.png
 Zaborg o Monarca do Trovao,1000,2400,resources/zaborg_o_monarca_do_trovao.png
 Mobius o Monarca da Geada,1000,2400,resources/mobius_o_monarca_da_geada.png
 Raiza o Monarca da Tempestade,1000,2400,resources/raiza_o_monarca_da_tempestade.png
@@ -52,7 +47,6 @@ Arquidemonio da Caveira Relampago,1200,2500,resources/arquidemonio_da_caveira_re
 Des Lacooda,600,500,resources/des_lacooda.png
 Germe Gigante,100,1000,resources/germe_gigante.png
 Behemoth de Duas Cabecas,1200,1500,resources/behemoth_de_duas_cabecas.png
-Dragao Branco de Olhos Azuis Supremo,3800,4500,resources/dragao_branco_de_olhos_azuis_supremo.png
 Cavalo Marinho Kaiser,1650,1700,resources/cavalo_marinho_kaiser.png
 La Jinn o Genio Mistico da Lampada,1000,1800,resources/la_jinn_o_genio_mistico_da_lampada.png
 O Homem Juiz,1500,2200,resources/o_homem_juiz.png
@@ -64,37 +58,26 @@ Espia Guardiao de Tumulos,1600,800,resources/espia_guardiao_de_tumulos.png
 Guarda Guardiao de Tumulos,2000,1200,resources/guarda_guardiao_de_tumulos.png
 Refletor de Ataques,1000,1700,resources/refletor_de_ataques.png
 Tartaruga OVNI,1200,1400,resources/tartaruga_ovni.png
-Orc Gigante,0,2200,resources/orc_gigante.png
 Gardna Grande Escudo,2600,100,resources/gardna_grande_escudo.png
 Cavaleira Comandante,1900,1200,resources/cavaleira_comandante.png
 Marshmallon,500,300,resources/marshmallon.png
 Guerreira Dama D.D.,1600,1500,resources/guerreira_dama_dd.png
 Forca Exilada,1000,1000,resources/forca_exilada.png
 Don Zaloog,1100,1400,resources/don_zaloog.png
-Inseto Serra Eletrica,0,2400,resources/inseto_serra_eletrica.png
 Cao Louco das Trevas,1100,1400,resources/cao_louco_das_trevas.png
 Mago do Transe,1300,1100,resources/mago_do_transe.png
 Pumpking o Rei dos Fantasmas,1500,1800,resources/pumpking_o_rei_dos_fantasmas.png
-Genesis Vampiro,2100,3000,resources/genesis_vampiro.png
 Dragao Metal Raro,2400,2400,resources/dragao_metal_raro.png
 Lamina Negra,1500,1800,resources/lamina_negra.png
 Gadget Verde,600,1400,resources/gadget_verde.png
 Gadget Vermelho,600,1400,resources/gadget_vermelho.png
 Gadget Amarelo,600,1400,resources/gadget_amarelo.png
 Dragao Cibernetico,1600,2100,resources/dragao_cibernetico.png
-Dragao Cibernetico Final,2800,4000,resources/dragao_cibernetico_final.png
-Dragao Cibernetico Gemeo,2100,2800,resources/dragao_cibernetico_gemeo.png
 Panda Fúria Reversa,2000,2000,resources/panda_furia_reversa.png
 Shogun de Defesa Total,2500,1550,resources/shogun_de_defesa_total.png
 Cavaleiro do Rei,1400,1600,resources/cavaleiro_do_rei.png
 Cavaleira da Rainha,1600,1500,resources/cavaleira_da_rainha.png
 Cavaleiro do Valete,1000,1900,resources/cavaleiro_do_valete.png
-Obelisco o Atormentador,4000,4000,resources/obelisco_o_atormentador.png
-Slifer o Dragao do Ceu,5000,5000,resources/slifer_o_dragao_do_ceu.png
-O Dragao Alado de Ra,5000,5000,resources/o_dragao_alado_de_ra.png
-Guardiao do Portao,3400,3750,resources/guardiao_do_portao.png
-Restricao de Mil Olhos,0,0,resources/restricao_de_mil_olhos.png
-Relinquished,0,0,resources/relinquished.png
 Besta de Talwar,1900,1550,resources/besta_de_talwar.png
 Gruta do Ogro de Aco,1800,1400,resources/gruta_do_ogro_de_aco.png
 Dragao Meteoro,2000,1800,resources/dragao_meteoro.png
@@ -104,7 +87,6 @@ Dama Harpia,1400,1300,resources/dama_harpia.png
 Irmao da Dama Harpia,600,1800,resources/irmao_da_dama_harpia.png
 Irmas Damas Harpias,2100,1950,resources/irmas_damas_harpias.png
 Dama Harpia Ciberneticaa,1300,1800,resources/dama_harpia_ciberneticaa.png
-Zombyra o Sombrio,0,2100,resources/zombyra_o_sombrio.png
 Servo Esqueleto,200,300,resources/servo_esqueleto.png
 Zumbi Palhaco,1500,1350,resources/zumbi_palhaco.png
 Ryu Kokki,2000,2400,resources/ryu_kokki.png
@@ -119,11 +101,29 @@ Pequeno Guarda-Asas,1800,1400,resources/pequeno_guarda-asas.png
 Boi de Batalha,1000,1700,resources/boi_de_batalha.png
 Guerreiro Castor,1500,1200,resources/guerreiro_castor.png
 Cacador de Espadas,1700,2450,resources/cacador_de_espadas.png
-Zumbi Dragao,0,1600,resources/zumbi_dragao.png
-Cavaleiro Esqueleto 2,0,2650,resources/cavaleiro_esqueleto_2.png
 Muro de Ilusao,1850,1000,resources/muro_de_ilusao.png
 Espadachim de Chamas,1600,1800,resources/espadachim_de_chamas.png
 Espadachim das Estrelas Errantes,400,500,resources/espadachim_das_estrelas_errantes.png
 Kaiser Rude,1600,1800,resources/kaiser_rude.png
 Cavaleiro Mistico,1550,1300,resources/cavaleiro_mistico.png
 Bickuribox,2350,2300,resources/bickuribox.png
+Tomate Mistico,1100,1400,resources/tomate_mistico.png
+Rato Gigante,1450,1400,resources/rato_gigante.png
+Newdoria,800,1200,resources/newdoria.png
+Dragao de Dimensao Diferente,1500,1200,resources/dragao_de_dimensao_diferente.png
+Esfinge Guardia,1500,2000,resources/esfinge_guardia.png
+Arquidemonio Rei do Terror,1500,2000,resources/arquidemonio_rei_do_terror.png
+Jarra de Fibra,1500,300,resources/jarra_de_fibra.png
+Mariposa Larval,500,500,resources/mariposa_larval.png
+Tartaruga Catapulta,2000,1000,resources/tartaruga_catapulta.png
+Rei Rex de Duas Cabecas,1200,1600,resources/rei_rex_de_duas_cabecas.png
+Grande Angus,600,1800,resources/grande_angus.png
+Ninja Armado,300,300,resources/ninja_armado.png
+Berfomet,1800,1400,resources/berfomet.png
+Guarda de Batalha do Pantano,1000,1800,resources/guarda_de_batalha_do_pantano.png
+Hane-Hane,400,500,resources/hane-hane.png
+Mae Grizzly,1000,1400,resources/mae_grizzly.png
+Ceifador no Pesadelo,900,1200,resources/ceifador_no_pesadelo.png
+Soldado Canhao,1300,1300,resources/soldado_canhao.png
+Passaro Sonico,1000,1400,resources/passaro_sonico.png
+Dragao Lanca,1500,1900,resources/dragao_lanca.png
