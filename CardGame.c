@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 //----------------------------------------------------------------------------------
 // Some Defines
 //----------------------------------------------------------------------------------
 #define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
 #define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
+#define MAX_CATALOGO 131
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -23,6 +25,7 @@ typedef struct Carta { //Estruura de uma carta
     int id; //Id único 
     int hp; //Vida da carta
     int atk; //Ataque da carta
+    char nome[64]
 } Carta;
 
 typedef struct Posicao { //Estrutura de posições no campo
@@ -46,6 +49,13 @@ typedef enum {
     JOGANDO
 } GameState;
 
+typedef struct CartaCSV{
+    char nome[64];
+    int hp;
+    int atk;
+    char caminhoTextura[128];
+} CartaCSV;
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -64,26 +74,58 @@ int main(void){
     //------------------------------------------------------------------------------
     Deck deck; //Instancia o Deck
     deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
-    Image imagem1 = LoadImage("resources/mago_negro.png"); //Define a imagem 
-    Image imagem2 = LoadImage("resources/feiticeira_negra.png"); 
-    ImageResize(&imagem1, 96, 144); //Modifica o tamanho da imagem
-    ImageResize(&imagem2, 96, 144); 
-    Texture2D textura = LoadTextureFromImage(imagem1); //Atribui a imagem a uma textura
-    Texture2D textura2 = LoadTextureFromImage(imagem2);
-    for(int i=0;i<MAX_DECK;i++){ //Percorre as cartas abribuindo uma textura e id
-        if(i%2 == 0){
-            deck.cartas[i].textura = textura;
-            deck.cartas[i].atk = 1000;
-        } else{
-            deck.cartas[i].textura = textura2;
-            deck.cartas[i].atk = 2000;
-        }
-        deck.cartas[i].id = i+1;
-        deck.cartas[i].hp = 2000;
+    Deck deckInimigo;
+        
+    CartaCSV catalogo[MAX_CATALOGO];
+    Texture2D texturasCarregadas[MAX_CATALOGO];
+    int cartaCarregando = 0;
+
+    FILE *arquivo = fopen("cards.csv", "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir\n");
     }
-    UnloadImage(imagem1); //Descarrega as imagens da memoria
-    UnloadImage(imagem2); 
- 
+
+    char linha[256];
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        linha[strcspn(linha, "\r\n")] = '\0';
+        char *pedaco = strtok(linha, ",");
+        strncpy(catalogo[cartaCarregando].nome, pedaco, sizeof(catalogo[cartaCarregando].nome) - 1);
+        pedaco = strtok(NULL, ",");
+        catalogo[cartaCarregando].hp = atoi(pedaco);
+        pedaco = strtok(NULL, ",");
+        catalogo[cartaCarregando].atk = atoi(pedaco);
+        pedaco = strtok(NULL, ",");
+        strncpy(catalogo[cartaCarregando].caminhoTextura, pedaco, sizeof(catalogo[cartaCarregando].caminhoTextura) - 1);
+        cartaCarregando++;
+    }
+    fclose(arquivo);
+
+    for (int i = 0; i < cartaCarregando; i++) {
+        Image img = LoadImage(catalogo[i].caminhoTextura);
+        ImageResize(&img, 96, 144);
+        texturasCarregadas[i] = LoadTextureFromImage(img);
+        UnloadImage(img);
+    }
+
+    srand(time(NULL));
+    for (int i = 0; i < MAX_DECK; i++) {
+        int escolhido = rand() % MAX_CATALOGO;
+        strncpy(deck.cartas[i].nome, catalogo[escolhido].nome, sizeof(deck.cartas[i].nome) - 1);
+        deck.cartas[i].hp = catalogo[escolhido].hp;
+        deck.cartas[i].atk = catalogo[escolhido].atk;
+        deck.cartas[i].textura = texturasCarregadas[escolhido];
+        deck.cartas[i].id = i + 1;
+    }
+    for (int i = 0; i < MAX_DECK; i++) {
+        int escolhido = rand() % MAX_CATALOGO;
+        strncpy(deckInimigo.cartas[i].nome, catalogo[escolhido].nome, sizeof(deckInimigo.cartas[i].nome) - 1);
+        deckInimigo.cartas[i].hp = catalogo[escolhido].hp;
+        deckInimigo.cartas[i].atk = catalogo[escolhido].atk;
+        deckInimigo.cartas[i].textura = texturasCarregadas[escolhido];
+        deckInimigo.cartas[i].id = i + 1;
+    }
+     
     //------------------------------------------------------------------------------
     // Game Entities Initialization
     //------------------------------------------------------------------------------    
@@ -133,7 +175,7 @@ int main(void){
 
     for(int i=0; i<MAX_POSITION; i++){ //Inicializa o deck com 6 cartas iniciais
         mao[i].carregada = deck.cartas[quantPuxada]; 
-        camposInimigos[i].carregada = deck.cartas[quantPuxada];
+        camposInimigos[i].carregada = deckInimigo.cartas[quantPuxada];
         camposInimigos[i].vazia = false;
         deck.cartas[quantPuxada] = (Carta){0};        
         mao[i].vazia = false;
@@ -483,7 +525,7 @@ int main(void){
                         }
                     }
                     if (cartaFocada != NULL){
-                        snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %d", cartaFocada->id);
+                        snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %s", cartaFocada->nome);
                         snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", cartaFocada->hp);
                         snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", cartaFocada->atk);
                         DrawText(nomeCarta, 12, 12, 48, (Color){220, 230, 240, 255});
@@ -510,9 +552,9 @@ int main(void){
             }
         EndDrawing();
     }
-
-    UnloadTexture(textura);
-    UnloadTexture(textura2);
-    CloseWindow();
+    for (int i = 0; i < MAX_CATALOGO; i++) {
+        UnloadTexture(texturasCarregadas[i]);
+    }
+        CloseWindow();
     return 0;
 }
