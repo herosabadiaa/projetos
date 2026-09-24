@@ -53,8 +53,9 @@ int main(void){
     //------------------------------------------------------------------------------
     // Window Initialization
     //------------------------------------------------------------------------------
-    const int screenWidth = 800; //Define a largura da tela
-    const int screenHeight = 450; //Define a altura da tela
+    const int screenWidth = 1920; //Define a largura da tela
+    const int screenHeight = 1080; //Define a altura da tela
+    SetConfigFlags(FLAG_FULLSCREEN_MODE);
     InitWindow(screenWidth, screenHeight, "a"); //Inicializa a janela
     SetTargetFPS(60); //Define o FPS  
     
@@ -62,11 +63,11 @@ int main(void){
     // Deck & Images Initialization
     //------------------------------------------------------------------------------
     Deck deck; //Instancia o Deck
-    deck.area = (Rectangle){screenWidth-50, screenHeight-50, 50, 50}; //Define a area que o deck ocupara
+    deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
     Image imagem1 = LoadImage("resources/mago_negro.png"); //Define a imagem 
-    Image imagem2 = LoadImage("resources/maga_negra.png"); 
-    ImageResize(&imagem1, 40, 60); //Modifica o tamanho da imagem
-    ImageResize(&imagem2, 40, 60); 
+    Image imagem2 = LoadImage("resources/feiticeira_negra.png"); 
+    ImageResize(&imagem1, 96, 144); //Modifica o tamanho da imagem
+    ImageResize(&imagem2, 96, 144); 
     Texture2D textura = LoadTextureFromImage(imagem1); //Atribui a imagem a uma textura
     Texture2D textura2 = LoadTextureFromImage(imagem2);
     for(int i=0;i<MAX_DECK;i++){ //Percorre as cartas abribuindo uma textura e id
@@ -88,7 +89,7 @@ int main(void){
     //------------------------------------------------------------------------------    
     Posicao mao[6] = {0}; //Instancia a mao
     for(int i=0; i<6; i++){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
-        mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (56.6*i)+45.3, screenHeight/2+screenHeight/64 +7.5, 40, 60};
+        mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (136*i)+109, screenHeight/2+screenHeight/64 +18, 96, 144};
         mao[i].vazia = true;
     }
     int quantPuxada = 0; //Intancia a variavel que conta qnts vezes uma carta foi puxada
@@ -105,8 +106,8 @@ int main(void){
     for(int i = 0; i<MAX_POSITION; i++){
         campos[i].area.x = i*screenWidth/MAX_POSITION;
         campos[i].area.y = 2.8*screenHeight/4;
-        campos[i].area.width = 80;
-        campos[i].area.height =120;
+        campos[i].area.width = 192;
+        campos[i].area.height =288;
         campos[i].vazia = true;
     }
 
@@ -114,21 +115,21 @@ int main(void){
     for(int i = 0; i<MAX_POSITION; i++){
         camposInimigos[i].area.x = i*screenWidth/MAX_POSITION;
         camposInimigos[i].area.y = 0.7  *screenHeight/4;
-        camposInimigos[i].area.width = 80;
-        camposInimigos[i].area.height =120;
+        camposInimigos[i].area.width = 192;
+        camposInimigos[i].area.height =288;
         camposInimigos[i].vazia = true;
     }
 
     Deck cemiterio; //Estrutura do cemiterio
     cemiterio = (Deck){0};
-    cemiterio.area = (Rectangle){screenWidth-50, screenHeight-150, 50, 50};
+    cemiterio.area = (Rectangle){screenWidth-120, screenHeight-360, 120, 120};
 
-    Rectangle alterTurno = {screenWidth-50, screenHeight-250, 50, 50}; //Define a opcao de finalizar o turno
+    Rectangle alterTurno = {screenWidth-120, screenHeight-600, 120, 120}; //Define a opcao de finalizar o turno
     GameState gameState = MENU; //Define o estado inicial como Menu
     TurnState turnState = TURNO_JOGADOR; //Define o estado de turno como meu
 
-    Rectangle jogar = {screenWidth/2 - 110, screenHeight/2 + 20, 220, 50}; //Cria o botao de iniciar o jogo
-    Rectangle fechar = {screenWidth/2 - 110, screenHeight/2 + 90, 220, 50}; //Cria o botao para fechar o jogo
+    Rectangle jogar = {screenWidth/2 - 264, screenHeight/2 + 48, 528, 120}; //Cria o botao de iniciar o jogo
+    Rectangle fechar = {screenWidth/2 - 264, screenHeight/2 + 216, 528, 120}; //Cria o botao para fechar o jogo
 
     for(int i=0; i<MAX_POSITION; i++){ //Inicializa o deck com 6 cartas iniciais
         mao[i].carregada = deck.cartas[quantPuxada]; 
@@ -324,25 +325,25 @@ int main(void){
                 //--------------------------------------------------------------------------
                 // Menu Draw
                 //--------------------------------------------------------------------------
-                case MENU: //Desenho do menu inicial
+                case MENU: { //Desenho do menu inicial
                     //Fundo
                     DrawRectangleGradientV(0, 0, screenWidth, screenHeight, (Color){20, 25, 35, 255}, (Color){10, 12, 18, 255});
 
                     //Deconracao
-                    Rectangle cardDeco1 = {screenWidth/2 - 220, screenHeight/2 - 130, 80, 120};
-                    DrawRectanglePro(cardDeco1, (Vector2){ 40, 60 }, -15.0f, (Color){0, 50, 70, 100});
-                    DrawRectangleLinesEx((Rectangle){cardDeco1.x - 40, cardDeco1.y - 60, cardDeco1.width, cardDeco1.height}, 2, (Color){80, 100, 130, 120});
+                    Rectangle cardDeco1 = {screenWidth/2 - 528, screenHeight/2 - 312, 192, 288};
+                    DrawRectanglePro(cardDeco1, (Vector2){ 96, 144 }, -15.0f, (Color){0, 50, 70, 100});
+                    DrawRectangleLinesEx((Rectangle){cardDeco1.x - 96, cardDeco1.y - 144, cardDeco1.width, cardDeco1.height}, 5, (Color){80, 100, 130, 120});
 
-                    Rectangle cardDeco2 = {screenWidth/2 + 220, screenHeight/2 - 130, 80, 120};
-                    DrawRectanglePro(cardDeco2, (Vector2){40, 60}, 15.0f, (Color){40, 50, 70, 100});
-                    DrawRectangleLinesEx((Rectangle){cardDeco2.x - 40, cardDeco2.y - 60, cardDeco2.width, cardDeco2.height}, 2, (Color){80, 100, 130, 120});
+                    Rectangle cardDeco2 = {screenWidth/2 + 528, screenHeight/2 - 312, 192, 288};
+                    DrawRectanglePro(cardDeco2, (Vector2){96, 144}, 15.0f, (Color){40, 50, 70, 100});
+                    DrawRectangleLinesEx((Rectangle){cardDeco2.x - 96, cardDeco2.y - 144, cardDeco2.width, cardDeco2.height}, 5, (Color){80, 100, 130, 120});
 
                     //Texto
                     const char *titulo = "SEM NOME";
                     const char *subtitulo = "CARD BATTLE GAME";
-                    DrawText(titulo, ((screenWidth / 2) - (MeasureText(titulo, 48) / 2)) + 3, (screenHeight/6) + 3, 48, (Color){0, 0, 0, 180});
-                    DrawText(titulo, ((screenWidth / 2) - (MeasureText(titulo, 48) / 2)), (screenHeight/6), 48, GOLD);
-                    DrawText(subtitulo, (screenWidth / 2) - (MeasureText(subtitulo, 18) / 2), (screenHeight/6) + 55, 18, LIGHTGRAY);
+                    DrawText(titulo, ((screenWidth / 2) - (MeasureText(titulo, 115) / 2)) + 7, (screenHeight/6) + 7, 115, (Color){0, 0, 0, 180});
+                    DrawText(titulo, ((screenWidth / 2) - (MeasureText(titulo, 115) / 2)), (screenHeight/6), 115, GOLD);
+                    DrawText(subtitulo, (screenWidth / 2) - (MeasureText(subtitulo, 43) / 2), (screenHeight/6) + 132, 43, LIGHTGRAY);
 
                     //hover
                     bool hoverJogar = CheckCollisionPointRec(mousePosition, jogar);
@@ -358,10 +359,10 @@ int main(void){
                         corBotaoJogar = (Color){ 30, 80, 60, 255 };    
                         corBordaJogar = (Color){ 40, 160, 100, 255 };
                     }
-                    DrawRectangleRounded((Rectangle){jogar.x + 4, jogar.y + 4, jogar.width, jogar.height}, 0.25f, 4, (Color){0, 0, 0, 120}); //Desenha uma pequena sombra
+                    DrawRectangleRounded((Rectangle){jogar.x + 10, jogar.y + 10, jogar.width, jogar.height}, 0.25f, 4, (Color){0, 0, 0, 120}); //Desenha uma pequena sombra
                     DrawRectangleRounded(jogar, 0.25f, 4, corBotaoJogar);
-                    DrawRectangleRoundedLinesEx(jogar, 0.25f, 4, 2.0f, corBordaJogar); //Desenha uma borda
-                    DrawText("JOGAR", jogar.x + (jogar.width / 2) - (MeasureText("JOGAR", 24) / 2), jogar.y + (jogar.height / 2) - 12, 24, WHITE);
+                    DrawRectangleRoundedLinesEx(jogar, 0.25f, 4, 5.0f, corBordaJogar); //Desenha uma borda
+                    DrawText("JOGAR", jogar.x + (jogar.width / 2) - (MeasureText("JOGAR", 58) / 2), jogar.y + (jogar.height / 2) - 29, 58, WHITE);
 
                     Color corBotaoFechar;
                     Color corBordaFechar;
@@ -373,11 +374,11 @@ int main(void){
                         corBotaoFechar = (Color){ 90, 25, 35, 255 };   
                         corBordaFechar = (Color){ 180, 50, 60, 255 };
                     }
-                    DrawRectangleRounded((Rectangle){fechar.x + 4, fechar.y + 4, fechar.width, fechar.height}, 0.25f, 4, (Color){0, 0, 0, 120}); //Desenha uma pequena sombra
+                    DrawRectangleRounded((Rectangle){fechar.x + 10, fechar.y + 10, fechar.width, fechar.height}, 0.25f, 4, (Color){0, 0, 0, 120}); //Desenha uma pequena sombra
                     DrawRectangleRounded(fechar, 0.25f, 4, corBotaoFechar);
-                    DrawRectangleRoundedLinesEx(fechar, 0.25f, 4, 2.0f, corBordaFechar); //Uma borda
-                    DrawText("FECHAR", fechar.x + (fechar.width / 2) - (MeasureText("FECHAR", 24) / 2), fechar.y + (fechar.height / 2) - 12, 24, WHITE);
-                break;
+                    DrawRectangleRoundedLinesEx(fechar, 0.25f, 4, 5.0f, corBordaFechar); //Uma borda
+                    DrawText("FECHAR", fechar.x + (fechar.width / 2) - (MeasureText("FECHAR", 58) / 2), fechar.y + (fechar.height / 2) - 29, 58, WHITE);
+                } break;
 
                 //--------------------------------------------------------------------------
                 // In-Game Draw
@@ -387,13 +388,13 @@ int main(void){
                     DrawRectangleGradientV(0, 0, screenWidth, screenHeight,(Color){15, 20, 30, 255}, (Color){8, 10, 15, 255});
                     DrawRectangle(0, 0, screenWidth, screenHeight / 2, (Color){255, 60, 60, 6});
                     DrawRectangle(0, screenHeight / 2, screenWidth, screenHeight/2, (Color){60, 120, 255, 6});
-                    DrawLineEx((Vector2){0, screenHeight/2.0f},(Vector2){(float)screenWidth, screenHeight / 2.0f},2.0f, (Color){255, 255, 255, 30});
+                    DrawLineEx((Vector2){0, screenHeight/2.0f},(Vector2){(float)screenWidth, screenHeight / 2.0f},5.0f, (Color){255, 255, 255, 30});
 
                     //Deck
-                    DrawRectangleRounded((Rectangle){deck.area.x + 4, deck.area.y + 4, deck.area.width, deck.area.height}, 0.15f, 6, (Color){ 20, 25, 35, 200 });
+                    DrawRectangleRounded((Rectangle){deck.area.x + 10, deck.area.y + 10, deck.area.width, deck.area.height}, 0.15f, 6, (Color){ 20, 25, 35, 200 });
                     DrawRectangleRounded(deck.area, 0.15f, 6, (Color){35, 45, 65, 255});
                     DrawRectangleRoundedLines(deck.area, 0.15f, 6, (Color){80, 110, 160, 255});
-                    DrawText("DECK", deck.area.x + deck.area.width / 2 - MeasureText("DECK", 18)/2, deck.area.y + deck.area.height / 2 - 9, 18, (Color){180, 200, 230, 255});
+                    DrawText("DECK", deck.area.x + deck.area.width / 2 - MeasureText("DECK", 43)/2, deck.area.y + deck.area.height / 2 - 22, 43, (Color){180, 200, 230, 255});
 
                     // Cemiterio
                     DrawRectangleRounded(cemiterio.area, 0.15f, 6, (Color){20, 20, 20, 255});
@@ -406,7 +407,7 @@ int main(void){
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
                         } else {
                             DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){40, 80, 140, 255});
-                            DrawTexturePro(campos[i].carregada.textura, (Rectangle){0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height}, (Rectangle){campos[i].area.x, campos[i].area.y, 80.0f, 120.0f}, (Vector2){0, 0}, 0.0f, WHITE);
+                            DrawTexturePro(campos[i].carregada.textura, (Rectangle){0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height}, (Rectangle){campos[i].area.x, campos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, WHITE);
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
                         }
 
@@ -415,7 +416,7 @@ int main(void){
                             DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
                         } else {
                             DrawRectangleRounded(camposInimigos[i].area, 0.12f, 6, (Color){40, 80, 140, 255});
-                            DrawTexturePro(camposInimigos[i].carregada.textura, (Rectangle){0, 0, camposInimigos[i].carregada.textura.width, camposInimigos[i].carregada.textura.height}, (Rectangle){camposInimigos[i].area.x, camposInimigos[i].area.y, 80.0f, 120.0f}, (Vector2){0, 0}, 0.0f, WHITE);
+                            DrawTexturePro(camposInimigos[i].carregada.textura, (Rectangle){0, 0, camposInimigos[i].carregada.textura.width, camposInimigos[i].carregada.textura.height}, (Rectangle){camposInimigos[i].area.x, camposInimigos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, WHITE);
                             DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
                         }
                     }
@@ -441,7 +442,7 @@ int main(void){
                     }
                     DrawRectangleRounded(alterTurno, 0.25f, 6, corBotaoPassar);
                     DrawRectangleRoundedLines(alterTurno, 0.25f, 6, (Color){255, 140, 140, 255});
-                    DrawText("PASSAR", alterTurno.x + alterTurno.width/2 - MeasureText("PASSAR", 14)/2,alterTurno.y + alterTurno.height / 2 - 7, 14, WHITE);
+                    DrawText("PASSAR", alterTurno.x + alterTurno.width/2 - MeasureText("PASSAR", 34)/2,alterTurno.y + alterTurno.height / 2 - 17, 34, WHITE);
 
                     //Arrasto
                     if (arrasto.id != 0) {
@@ -452,7 +453,7 @@ int main(void){
                     char ataque[32];
                     if (ataco != NULL){
                         snprintf(ataque, sizeof(ataque), "ATK: %d", ataco->atk);
-                        DrawText(ataque, 140, 10, 20, (Color){255, 0, 0, 155});
+                        DrawText(ataque, 336, 24, 48, (Color){255, 0, 0, 155});
                     }
 
 
@@ -485,17 +486,17 @@ int main(void){
                         snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %d", cartaFocada->id);
                         snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", cartaFocada->hp);
                         snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", cartaFocada->atk);
-                        DrawText(nomeCarta, 5, 5, 20, (Color){220, 230, 240, 255});
-                        DrawText(vidaCarta, 5, 25, 20, (Color){220, 230, 240, 255});
-                        DrawText(ataqueCarta, 5, 45, 20, (Color){220, 230, 240, 255});
+                        DrawText(nomeCarta, 12, 12, 48, (Color){220, 230, 240, 255});
+                        DrawText(vidaCarta, 12, 60, 48, (Color){220, 230, 240, 255});
+                        DrawText(ataqueCarta, 12, 108, 48, (Color){220, 230, 240, 255});
                     }
 
                     char deckText[64]; //Textos de informacoes de qnts de cartas no deck e cemiterio
                     char cemiterioText[64];
                     snprintf(cemiterioText, sizeof(cemiterioText), "CEMITERIO: %d/%d", quantMorta, MAX_DECK);
                     snprintf(deckText, sizeof(deckText), "DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK);
-                    DrawText(deckText, 6.5*screenWidth/8, 20, 20, (Color){220, 230, 240, 255});
-                    DrawText(cemiterioText, 6*screenWidth/8, 40, 20, (Color){220, 230, 240, 255});
+                    DrawText(deckText, 6.5*screenWidth/8, 48, 48, (Color){220, 230, 240, 255});
+                    DrawText(cemiterioText, 6*screenWidth/8, 96, 48, (Color){220, 230, 240, 255});
 
                     char turnoText[64]; //Dsenha em que turno o jogo esta
                     if (turnState == TURNO_JOGADOR) {
@@ -504,7 +505,7 @@ int main(void){
                         snprintf(turnoText, sizeof(turnoText), "TURNO INIMIGO");
                     }
 
-                    DrawText(turnoText, (screenWidth/2) - (MeasureText(turnoText, 24)/2), 20, 24, (Color){220, 230, 240, 255});
+                    DrawText(turnoText, (screenWidth/2) - (MeasureText(turnoText, 58)/2), 48, 58, (Color){220, 230, 240, 255});
                 break;    
             }
         EndDrawing();
