@@ -14,6 +14,7 @@
 #define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
 #define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
 #define MAX_CATALOGO 131
+#define MAX_MANA 20
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -137,7 +138,7 @@ int main(void){
     //------------------------------------------------------------------------------
     // Game Entities Initialization
     //------------------------------------------------------------------------------    
-    Posicao mao[6] = {0}; //Instancia a mao
+    Posicao mao[MAX_POSITION] = {0}; //Instancia a mao
     for(int i=0; i<6; i++){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
         mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (136*i)+109, screenHeight/2+screenHeight/64 +18, 96, 144};
         mao[i].vazia = true;
@@ -151,7 +152,7 @@ int main(void){
     bool atacadoTurno = false; //Flag para controlar o ataque por rodada
     bool atacadoTurnoEnemy = false;
     bool fecharJogo = false;
-    int mana = 20;
+    int mana = MAX_MANA;
     int hp = 8000;
     int hpInimigo = 8000;
 
@@ -242,9 +243,12 @@ int main(void){
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
                                     if (mao[i].carregada.lock == false){
                                         if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
-                                            arrasto = mao[i].carregada;
-                                            mao[i].carregada = (Carta){0};
-                                            mao[i].vazia = true;
+                                            if (mana >= mao[i].carregada.cost){
+                                                arrasto = mao[i].carregada;
+                                                mana -= mao[i].carregada.cost;
+                                                mao[i].carregada = (Carta){0};
+                                                mao[i].vazia = true;
+                                            }
                                         }
                                     }
                                 }
@@ -260,14 +264,12 @@ int main(void){
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
                                 for (int i=0; i<MAX_POSITION; i++){ 
                                     if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
-                                        if(ataco->cost > mana){
-                                            if (camposInimigos[i].vazia == false){
-                                                camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
-                                                mana -= ataco->cost;
-                                                ataco = NULL;
-                                                atacadoTurno = true;
-                                            }
+                                        if (camposInimigos[i].vazia == false){
+                                            camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
+                                            ataco = NULL;
+                                            atacadoTurno = true;
                                         }
+                                        
                                     }
                                 }
                             }
@@ -308,7 +310,6 @@ int main(void){
                                 }
                             }
                             if (meuOcupado && inimigoOcupado){ //Se no minimo uma posicao de cada lado estiver ocupada, ele ataca um inimigo aleatorio com uma carta aleatoria
-                                srand(time(NULL));
                                 int escolhaMeu;
                                 int escolhaInimigo;
                                 while (true){
@@ -559,12 +560,12 @@ int main(void){
                         DrawText(costCarta, 12, 156, 48, (Color){220, 230, 240, 255});
                     }
 
-                    char deckText[64]; //Textos de informacoes de qnts de cartas no deck e cemiterio
-                    char cemiterioText[64];
-                    snprintf(cemiterioText, sizeof(cemiterioText), "CEMITERIO: %d/%d", quantMorta, MAX_DECK);
+                    char deckText[64]; 
+                    char manaText[64];
+                    snprintf(manaText, sizeof(manaText), "MANA: %d/%d", mana, MAX_MANA);
                     snprintf(deckText, sizeof(deckText), "DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK);
                     DrawText(deckText, 6.5*screenWidth/8, 48, 48, (Color){220, 230, 240, 255});
-                    DrawText(cemiterioText, 6*screenWidth/8, 96, 48, (Color){220, 230, 240, 255});
+                    DrawText(manaText, 6*screenWidth/8, 96, 48, (Color){220, 230, 240, 255});
 
                     char turnoText[64]; //Dsenha em que turno o jogo esta
                     if (turnState == TURNO_JOGADOR) {
