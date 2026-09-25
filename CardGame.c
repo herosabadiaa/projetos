@@ -25,7 +25,9 @@ typedef struct Carta { //Estruura de uma carta
     int id; //Id único 
     int hp; //Vida da carta
     int atk; //Ataque da carta
-    char nome[64]
+    int cost;
+    bool lock;
+    char nome[64];
 } Carta;
 
 typedef struct Posicao { //Estrutura de posições no campo
@@ -53,6 +55,7 @@ typedef struct CartaCSV{
     char nome[64];
     int hp;
     int atk;
+    int mana;
     char caminhoTextura[128];
 } CartaCSV;
 
@@ -79,13 +82,12 @@ int main(void){
     CartaCSV catalogo[MAX_CATALOGO];
     Texture2D texturasCarregadas[MAX_CATALOGO];
     int cartaCarregando = 0;
+    char linha[256];
 
     FILE *arquivo = fopen("cards.csv", "r");
     if (arquivo == NULL) {
         printf("Erro ao abrir\n");
     }
-
-    char linha[256];
 
     while (fgets(linha, sizeof(linha), arquivo) != NULL) {
         linha[strcspn(linha, "\r\n")] = '\0';
@@ -95,6 +97,8 @@ int main(void){
         catalogo[cartaCarregando].hp = atoi(pedaco);
         pedaco = strtok(NULL, ",");
         catalogo[cartaCarregando].atk = atoi(pedaco);
+        pedaco = strtok(NULL, ",");
+        catalogo[cartaCarregando].mana = atoi(pedaco);
         pedaco = strtok(NULL, ",");
         strncpy(catalogo[cartaCarregando].caminhoTextura, pedaco, sizeof(catalogo[cartaCarregando].caminhoTextura) - 1);
         cartaCarregando++;
@@ -114,16 +118,20 @@ int main(void){
         strncpy(deck.cartas[i].nome, catalogo[escolhido].nome, sizeof(deck.cartas[i].nome) - 1);
         deck.cartas[i].hp = catalogo[escolhido].hp;
         deck.cartas[i].atk = catalogo[escolhido].atk;
+        deck.cartas[i].cost = catalogo[escolhido].mana;
         deck.cartas[i].textura = texturasCarregadas[escolhido];
         deck.cartas[i].id = i + 1;
+        deck.cartas[i].lock = true;
     }
     for (int i = 0; i < MAX_DECK; i++) {
         int escolhido = rand() % MAX_CATALOGO;
         strncpy(deckInimigo.cartas[i].nome, catalogo[escolhido].nome, sizeof(deckInimigo.cartas[i].nome) - 1);
         deckInimigo.cartas[i].hp = catalogo[escolhido].hp;
         deckInimigo.cartas[i].atk = catalogo[escolhido].atk;
+        deckInimigo.cartas[i].cost = catalogo[escolhido].mana;
         deckInimigo.cartas[i].textura = texturasCarregadas[escolhido];
         deckInimigo.cartas[i].id = i + 1;
+        deckInimigo.cartas[i].lock = true;
     }
      
     //------------------------------------------------------------------------------
@@ -143,6 +151,9 @@ int main(void){
     bool atacadoTurno = false; //Flag para controlar o ataque por rodada
     bool atacadoTurnoEnemy = false;
     bool fecharJogo = false;
+    int mana = 20;
+    int hp = 8000;
+    int hpInimigo = 8000;
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
     for(int i = 0; i<MAX_POSITION; i++){
@@ -174,7 +185,8 @@ int main(void){
     Rectangle fechar = {screenWidth/2 - 264, screenHeight/2 + 216, 528, 120}; //Cria o botao para fechar o jogo
 
     for(int i=0; i<MAX_POSITION; i++){ //Inicializa o deck com 6 cartas iniciais
-        mao[i].carregada = deck.cartas[quantPuxada]; 
+        mao[i].carregada = deck.cartas[quantPuxada];
+        mao[i].carregada.lock = false; 
         camposInimigos[i].carregada = deckInimigo.cartas[quantPuxada];
         camposInimigos[i].vazia = false;
         deck.cartas[quantPuxada] = (Carta){0};        
@@ -228,10 +240,12 @@ int main(void){
                             }
                             for (int i=0;i<MAX_POSITION; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
-                                    if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
-                                        arrasto = mao[i].carregada;
-                                        mao[i].carregada = (Carta){0};
-                                        mao[i].vazia = true;
+                                    if (mao[i].carregada.lock == false){
+                                        if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
+                                            arrasto = mao[i].carregada;
+                                            mao[i].carregada = (Carta){0};
+                                            mao[i].vazia = true;
+                                        }
                                     }
                                 }
                             }
@@ -246,10 +260,13 @@ int main(void){
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
                                 for (int i=0; i<MAX_POSITION; i++){ 
                                     if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
-                                        if (camposInimigos[i].vazia == false){
-                                            camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
-                                            ataco = NULL;
-                                            atacadoTurno = true;
+                                        if(ataco->mana > mana){
+                                            if (camposInimigos[i].vazia == false){
+                                                camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
+                                                ataco = NULL;
+                                                atacadoTurno = true;
+                                                mana -= ataco->mana;
+                                            }
                                         }
                                     }
                                 }
@@ -327,6 +344,12 @@ int main(void){
                             turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
                             compradoTurno = false;  //Me permite comprar outra carta
                             atacadoTurno = false;
+                            mana +=1;
+                            for(int i=0; i< MAX_POSITION; i++){
+                                if(mao[i].vazia == false){
+                                    mao[i].carregada.lock = false;
+                                }
+                            }
                         }    
                     }
                 }    
@@ -502,9 +525,10 @@ int main(void){
                     char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
                     char vidaCarta[16];
                     char ataqueCarta[16];
+                    char costCarta[16]
                     Carta *cartaFocada = NULL;
                     for (int i=0; i<MAX_POSITION; i++){
-                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area) || (CheckCollisionPointRec(GetMousePosition(), mao[i].area && alterMao))){
                             if (campos[i].vazia == false){
                                 cartaFocada = &campos[i].carregada;
                             }
@@ -531,6 +555,7 @@ int main(void){
                         DrawText(nomeCarta, 12, 12, 48, (Color){220, 230, 240, 255});
                         DrawText(vidaCarta, 12, 60, 48, (Color){220, 230, 240, 255});
                         DrawText(ataqueCarta, 12, 108, 48, (Color){220, 230, 240, 255});
+                        DrawText(costCarta, 12, 156, 48, (Color){220, 230, 240, 255});
                     }
 
                     char deckText[64]; //Textos de informacoes de qnts de cartas no deck e cemiterio
