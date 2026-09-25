@@ -525,7 +525,7 @@ int main(void){
                     char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
                     char vidaCarta[16];
                     char ataqueCarta[16];
-                    char costCarta[16]
+                    char costCarta[16];
                     Carta *cartaFocada = NULL;
                     for (int i=0; i<MAX_POSITION; i++){
                         if (CheckCollisionPointRec(GetMousePosition(), campos[i].area) || (CheckCollisionPointRec(GetMousePosition(), mao[i].area && alterMao))){
@@ -552,6 +552,7 @@ int main(void){
                         snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %s", cartaFocada->nome);
                         snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", cartaFocada->hp);
                         snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", cartaFocada->atk);
+                        snprintf(costCarta, sizeof(costCarta), "Mana: %d", cartaFocada->cost);
                         DrawText(nomeCarta, 12, 12, 48, (Color){220, 230, 240, 255});
                         DrawText(vidaCarta, 12, 60, 48, (Color){220, 230, 240, 255});
                         DrawText(ataqueCarta, 12, 108, 48, (Color){220, 230, 240, 255});
