@@ -260,12 +260,12 @@ int main(void){
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
                                 for (int i=0; i<MAX_POSITION; i++){ 
                                     if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
-                                        if(ataco->mana > mana){
+                                        if(ataco->cost > mana){
                                             if (camposInimigos[i].vazia == false){
                                                 camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
+                                                mana -= ataco->cost;
                                                 ataco = NULL;
                                                 atacadoTurno = true;
-                                                mana -= ataco->mana;
                                             }
                                         }
                                     }
@@ -528,7 +528,7 @@ int main(void){
                     char costCarta[16];
                     Carta *cartaFocada = NULL;
                     for (int i=0; i<MAX_POSITION; i++){
-                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area) || (CheckCollisionPointRec(GetMousePosition(), mao[i].area && alterMao))){
+                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area) || (CheckCollisionPointRec(GetMousePosition(), mao[i].area)&& alterMao)){
                             if (campos[i].vazia == false){
                                 cartaFocada = &campos[i].carregada;
                             }
