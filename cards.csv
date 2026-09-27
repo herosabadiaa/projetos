@@ -1,4 +1,3 @@
-nome,hp,atk,mana,textura
 Blue-Eyes White Dragon,2500,3000,10,resources/blue-eyes_white_dragon.png
 Dark Magician,2100,2500,8,resources/dark_magician.png
 Red-Eyes Black Dragon,2000,2400,8,resources/red-eyes_black_dragon.png
@@ -127,6 +126,6 @@ Reaper on the Nightmare,900,1200,4,resources/reaper_on_the_nightmare.png
 Cannon Soldier,1300,1300,5,resources/cannon_soldier.png
 Sonic Bird,1000,1400,4,resources/sonic_bird.png
 Spear Dragon,1500,1900,6,resources/spear_dragon.png
-Slifer the Sky Dragon,5000,5000,10,resources/slifer_the_sky_dragon.png
-Obelisk the Tormentor,4000,4000,10,resources/obelisk_the_tormentor.png
-The Winged Dragon of Ra,5000,5000,10,resources/the_winged_dragon_of_ra.png
+Slifer the Sky Dragon,5000,5000,13,resources/slifer_the_sky_dragon.png
+Obelisk the Tormentor,4000,4000,12,resources/obelisk_the_tormentor.png
+The Winged Dragon of Ra,5000,5000,13,resources/the_winged_dragon_of_ra.png

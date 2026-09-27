@@ -28,6 +28,7 @@ typedef struct Carta { //Estruura de uma carta
     int atk; //Ataque da carta
     int cost;
     bool lock;
+    bool shield; 
     char nome[64];
 } Carta;
 
@@ -42,12 +43,12 @@ typedef struct Deck { //Estrutura do deck
     Carta cartas[MAX_DECK]; //Lista de cartas
 } Deck;
 
-typedef enum { //Estrutura de estados
+typedef enum TurnState{ //Estrutura de estados
     TURNO_JOGADOR, //Estado do meu turno
     TURNO_INIMIGO //Estado do turno inimigo
 } TurnState;
 
-typedef enum {
+typedef enum GameState{
     MENU,
     JOGANDO
 } GameState;
@@ -69,8 +70,9 @@ int main(void){
     //------------------------------------------------------------------------------
     const int screenWidth = 1920; //Define a largura da tela
     const int screenHeight = 1080; //Define a altura da tela
-    SetConfigFlags(FLAG_FULLSCREEN_MODE);
-    InitWindow(screenWidth, screenHeight, "a"); //Inicializa a janela
+    SetConfigFlags(FLAG_WINDOW_UNDECORATED);
+    InitWindow(screenWidth, screenHeight, "a");
+    SetWindowPosition(0, 0);
     SetTargetFPS(60); //Define o FPS  
     
     //------------------------------------------------------------------------------
@@ -123,6 +125,7 @@ int main(void){
         deck.cartas[i].textura = texturasCarregadas[escolhido];
         deck.cartas[i].id = i + 1;
         deck.cartas[i].lock = true;
+        deck.cartas[i].shield = false;
     }
     for (int i = 0; i < MAX_DECK; i++) {
         int escolhido = rand() % MAX_CATALOGO;
@@ -133,6 +136,7 @@ int main(void){
         deckInimigo.cartas[i].textura = texturasCarregadas[escolhido];
         deckInimigo.cartas[i].id = i + 1;
         deckInimigo.cartas[i].lock = true;
+        deckInimigo.cartas[i].shield = false;
     }
      
     //------------------------------------------------------------------------------
@@ -151,6 +155,7 @@ int main(void){
     bool compradoTurno = false; //Flag para controlar a comprar por rodada
     bool atacadoTurno = false; //Flag para controlar o ataque por rodada
     bool atacadoTurnoEnemy = false;
+    bool shield = false;
     bool fecharJogo = false;
     int mana = MAX_MANA;
     int hp = 8000;
@@ -287,6 +292,37 @@ int main(void){
                                 }
                             }
                         }
+                        if(IsKeyPressed(KEY_S)){
+                            bool temShield;
+                            for(int i = 0; i<MAX_POSITION; i++){
+                                if(campos[i].carregada.shield == true){
+                                    temShield = true;
+                                    break;
+                                } else{
+                                    temShield = false;
+                                }
+                            }
+                            if(temShield == false){
+                                shield = true;
+                            }
+                        }
+                        if(shield == true){
+                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                                for(int i = 0; i<MAX_POSITION; i++){
+                                    if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
+                                        if(mana>=campos[i].carregada.cost+1){
+                                            campos[i].carregada.shield = true;
+                                            mana -= (campos[i].carregada.cost+1);
+                                            shield = false;
+                                            break;
+                                        }
+                                    } else{
+                                        shield = false;
+                                    }
+                                }
+                            }
+                        }
+
                     break;
                     case TURNO_INIMIGO:
                         //--RMB--
@@ -324,7 +360,9 @@ int main(void){
                                         break;
                                     }
                                 }
-                                campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
+                                if(campos[escolhaMeu].carregada.shield == false){
+                                    campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
+                                }
                                 atacadoTurnoEnemy = true; //Encerra o ataque inimigo
                             }
                         }
@@ -345,10 +383,15 @@ int main(void){
                             turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
                             compradoTurno = false;  //Me permite comprar outra carta
                             atacadoTurno = false;
-                            mana +=1;
+                            if(mana < MAX_MANA){
+                                mana +=1;
+                            }
                             for(int i=0; i< MAX_POSITION; i++){
                                 if(mao[i].vazia == false){
                                     mao[i].carregada.lock = false;
+                                }
+                                if(campos[i].carregada.shield == true){
+                                    campos[i].carregada.shield = false;
                                 }
                             }
                         }    
@@ -376,6 +419,7 @@ int main(void){
                     if (camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
                         camposInimigos[i].carregada = (Carta){0}; //A posicao dela e limpa
                         camposInimigos[i].vazia = true; //A posicao e definida como vazia
+                        mana +=2;
                         break;
                     }
                 }  
@@ -485,6 +529,9 @@ int main(void){
                             DrawTexturePro(camposInimigos[i].carregada.textura, (Rectangle){0, 0, camposInimigos[i].carregada.textura.width, camposInimigos[i].carregada.textura.height}, (Rectangle){camposInimigos[i].area.x, camposInimigos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, WHITE);
                             DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
                         }
+                        if(campos[i].carregada.shield == true){
+                            DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){255, 255, 0, 80});
+                        }
                     }
 
                     //Mao
@@ -529,7 +576,7 @@ int main(void){
                     char costCarta[16];
                     Carta *cartaFocada = NULL;
                     for (int i=0; i<MAX_POSITION; i++){
-                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area) || (CheckCollisionPointRec(GetMousePosition(), mao[i].area)&& alterMao)){
+                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
                             if (campos[i].vazia == false){
                                 cartaFocada = &campos[i].carregada;
                             }
