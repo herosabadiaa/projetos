@@ -424,7 +424,7 @@ int main(void){
                                     campos[i].carregada.shield = false;
                                 }
                                 for(int j=0;j<MAX_CATALOGO; j++){
-                                    if(campos[i].carregada.nome == catalogo[j].nome){
+                                    if(strcmp(campos[i].carregada.nome,catalogo[j].nome) == 0){
                                         campos[i].carregada.atk = catalogo[j].atk;
                                         break;
                                     }
