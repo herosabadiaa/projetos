@@ -570,10 +570,7 @@ int main(void){
                     }
 
 
-                    char nomeCarta[64]; //Desenha as infos da carta que seu mouse esta 'sobrevoando'
-                    char vidaCarta[16];
-                    char ataqueCarta[16];
-                    char costCarta[16];
+                    //Desenha as infos da carta que seu mouse esta 'sobrevoando'
                     Carta *cartaFocada = NULL;
                     for (int i=0; i<MAX_POSITION; i++){
                         if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
@@ -596,15 +593,12 @@ int main(void){
                             }
                         }
                     }
-                    if (cartaFocada != NULL){
-                        snprintf(nomeCarta, sizeof(nomeCarta), "Nome: %s", cartaFocada->nome);
-                        snprintf(vidaCarta, sizeof(vidaCarta), "HP: %d", cartaFocada->hp);
-                        snprintf(ataqueCarta, sizeof(ataqueCarta), "ATK: %d", cartaFocada->atk);
-                        snprintf(costCarta, sizeof(costCarta), "Mana: %d", cartaFocada->cost);
-                        DrawText(nomeCarta, 12, 12, 48, (Color){220, 230, 240, 255});
-                        DrawText(vidaCarta, 12, 60, 48, (Color){220, 230, 240, 255});
-                        DrawText(ataqueCarta, 12, 108, 48, (Color){220, 230, 240, 255});
-                        DrawText(costCarta, 12, 156, 48, (Color){220, 230, 240, 255});
+                    if (cartaFocada != NULL) {
+                       DrawText(TextFormat("Nome: %s", cartaFocada->nome), 12, 12, 48, (Color){220, 230, 240, 255});
+                       DrawText(TextFormat("HP: %d", cartaFocada->hp), 12, 60, 48, (Color){220, 230, 240, 255});
+                       DrawText(TextFormat("ATK: %d", cartaFocada->atk), 12, 108, 48, (Color){220, 230, 240, 255});
+                       DrawText(TextFormat("Mana: %d", cartaFocada->cost), 12, 156, 48, (Color){220, 230, 240, 255});
+
                     }
 
                     char deckText[64]; 
