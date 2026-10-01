@@ -160,6 +160,9 @@ int main(void){
     int mana = MAX_MANA;
     int hp = 8000;
     int hpInimigo = 8000;
+    bool charge = false;
+    bool chargeTurno = false;
+
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
     for(int i = 0; i<MAX_POSITION; i++){
@@ -306,7 +309,7 @@ int main(void){
                                 shield = true;
                             }
                         }
-                        if(shield == true){
+                        if(shield){
                             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                                 for(int i = 0; i<MAX_POSITION; i++){
                                     if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
@@ -318,6 +321,32 @@ int main(void){
                                         }
                                     } else{
                                         shield = false;
+                                    }
+                                }
+                            }
+                        }
+                        if(IsKeyPressed(KEY_D)){
+                            if(!chargeTurno){
+                                charge = true;
+                            }
+                        }
+                        if(charge){
+                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                                for(int i = 0; i<MAX_POSITION; i++){
+                                    if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
+                                        if(mana>=campos[i].carregada.cost-1){                                            
+                                            campos[i].carregada.atk *= 1.2;
+                                            if(campos[i].carregada.cost < 2){
+                                                mana -= (campos[i].carregada.cost);
+                                            }else{
+                                                mana -= (campos[i].carregada.cost-1);
+                                            }
+                                            chargeTurno = true;
+                                            charge = false;
+                                            break;
+                                        }
+                                    } else{
+                                        charge = false;
                                     }
                                 }
                             }
@@ -383,6 +412,7 @@ int main(void){
                             turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
                             compradoTurno = false;  //Me permite comprar outra carta
                             atacadoTurno = false;
+                            chargeTurno = false;
                             if(mana < MAX_MANA){
                                 mana +=1;
                             }
@@ -392,6 +422,12 @@ int main(void){
                                 }
                                 if(campos[i].carregada.shield == true){
                                     campos[i].carregada.shield = false;
+                                }
+                                for(int j=0;j<MAX_CATALOGO; j++){
+                                    if(campos[i].carregada.nome == catalogo[j].nome){
+                                        campos[i].carregada.atk = catalogo[j].atk;
+                                        break;
+                                    }
                                 }
                             }
                         }    
@@ -601,12 +637,8 @@ int main(void){
 
                     }
 
-                    char deckText[64]; 
-                    char manaText[64];
-                    snprintf(manaText, sizeof(manaText), "MANA: %d/%d", mana, MAX_MANA);
-                    snprintf(deckText, sizeof(deckText), "DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK);
-                    DrawText(deckText, 6.5*screenWidth/8, 48, 48, (Color){220, 230, 240, 255});
-                    DrawText(manaText, 6*screenWidth/8, 96, 48, (Color){220, 230, 240, 255});
+                    DrawText(TextFormat("DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK), 6.5*screenWidth/8, 48, 48, (Color){220, 230, 240, 255});
+                    DrawText(TextFormat("MANA: %d/%d", mana, MAX_MANA), 6.5*screenWidth/8, 96, 48, (Color){220, 230, 240, 255});
 
                     char turnoText[64]; //Dsenha em que turno o jogo esta
                     if (turnState == TURNO_JOGADOR) {
