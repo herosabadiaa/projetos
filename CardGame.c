@@ -247,9 +247,19 @@ int main(void){
                                     }
                                 }
                             }
+                            int ocupadas = 0;
+                            for (int i=0;i<MAX_POSITION; i++){
+                                if(!campos[i].vazia){
+                                    ocupadas +=1;
+                                }
+                            }
                             for (int i=0;i<MAX_POSITION; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
-                                    if (mao[i].carregada.lock == false){
+                                    if(ocupadas == 6){
+                                        mana += (int)(mao[i].carregada.cost*0.5);
+                                        mao[i].vazia = true;                                        
+                                        mao[i].carregada = (Carta){0};
+                                    }else if (mao[i].carregada.lock == false){
                                         if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
                                             if (mana >= mao[i].carregada.cost){
                                                 arrasto = mao[i].carregada;
