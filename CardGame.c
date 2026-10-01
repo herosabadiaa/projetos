@@ -14,7 +14,9 @@
 #define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
 #define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
 #define MAX_CATALOGO 131
-#define MAX_MANA 20
+#define MAX_MANA 200
+
+#define FOR(i,n) for(int i=0; i<(n);i++)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
