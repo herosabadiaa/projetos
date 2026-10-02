@@ -110,7 +110,7 @@ int main(void){
     }
     fclose(arquivo);
 
-    for (int i = 0; i < cartaCarregando; i++) {
+    FOR(i, cartaCarregando) {
         Image img = LoadImage(catalogo[i].caminhoTextura);
         ImageResize(&img, 96, 144);
         texturasCarregadas[i] = LoadTextureFromImage(img);
@@ -118,7 +118,7 @@ int main(void){
     }
 
     srand(time(NULL));
-    for (int i = 0; i < MAX_DECK; i++) {
+    FOR(i,MAX_DECK) {
         int escolhido = rand() % MAX_CATALOGO;
         strncpy(deck.cartas[i].nome, catalogo[escolhido].nome, sizeof(deck.cartas[i].nome) - 1);
         deck.cartas[i].hp = catalogo[escolhido].hp;
@@ -129,7 +129,7 @@ int main(void){
         deck.cartas[i].lock = true;
         deck.cartas[i].shield = false;
     }
-    for (int i = 0; i < MAX_DECK; i++) {
+    FOR(i, MAX_DECK) {
         int escolhido = rand() % MAX_CATALOGO;
         strncpy(deckInimigo.cartas[i].nome, catalogo[escolhido].nome, sizeof(deckInimigo.cartas[i].nome) - 1);
         deckInimigo.cartas[i].hp = catalogo[escolhido].hp;
@@ -145,7 +145,7 @@ int main(void){
     // Game Entities Initialization
     //------------------------------------------------------------------------------    
     Posicao mao[MAX_POSITION] = {0}; //Instancia a mao
-    for(int i=0; i<6; i++){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
+    FOR(i, MAX_POSITION)){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
         mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (136*i)+109, screenHeight/2+screenHeight/64 +18, 96, 144};
         mao[i].vazia = true;
     }
@@ -167,7 +167,7 @@ int main(void){
 
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
-    for(int i = 0; i<MAX_POSITION; i++){
+    FOR(i, MAX_POSITION){
         campos[i].area.x = i*screenWidth/MAX_POSITION;
         campos[i].area.y = 2.8*screenHeight/4;
         campos[i].area.width = 192;
@@ -176,7 +176,7 @@ int main(void){
     }
 
     Posicao camposInimigos[MAX_POSITION]; //Instancia as posicoes do campo inimigo
-    for(int i = 0; i<MAX_POSITION; i++){
+    FOR(i, MAX_POSITION){
         camposInimigos[i].area.x = i*screenWidth/MAX_POSITION;
         camposInimigos[i].area.y = 0.7  *screenHeight/4;
         camposInimigos[i].area.width = 192;
@@ -195,7 +195,7 @@ int main(void){
     Rectangle jogar = {screenWidth/2 - 264, screenHeight/2 + 48, 528, 120}; //Cria o botao de iniciar o jogo
     Rectangle fechar = {screenWidth/2 - 264, screenHeight/2 + 216, 528, 120}; //Cria o botao para fechar o jogo
 
-    for(int i=0; i<MAX_POSITION; i++){ //Inicializa o deck com 6 cartas iniciais
+    FOR(i, MAX_POSITION){ //Inicializa o deck com 6 cartas iniciais
         mao[i].carregada = deck.cartas[quantPuxada];
         mao[i].carregada.lock = false; 
         camposInimigos[i].carregada = deckInimigo.cartas[quantPuxada];
@@ -229,11 +229,11 @@ int main(void){
                         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
                             if(quantPuxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
                                 if (CheckCollisionPointRec(GetMousePosition(), deck.area) && compradoTurno == false){ //Checa a colisão entre o mouse e deck
-                                    for(int i=0; i<MAX_POSITION; i++){ 
+                                    FOR(i, MAX_POSITION){ 
                                         if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
                                             Carta disponivel;
                                             int j;
-                                            for(j = 0; j<MAX_DECK; j++){
+                                            FOR(j, MAX_DECK){
                                                 if(deck.cartas[j].id != 0){
                                                     disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
                                                     break;
@@ -250,12 +250,12 @@ int main(void){
                                 }
                             }
                             int ocupadas = 0;
-                            for (int i=0;i<MAX_POSITION; i++){
+                            FOR(i, MAX_POSITION){
                                 if(!campos[i].vazia){
                                     ocupadas +=1;
                                 }
                             }
-                            for (int i=0;i<MAX_POSITION; i++){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
+                            FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
                                     if(ocupadas == 6){
                                         mana += (int)(mao[i].carregada.cost*0.5);
@@ -273,7 +273,7 @@ int main(void){
                                     }
                                 }
                             }
-                            for (int i=0; i<MAX_POSITION; i++){
+                            FOR(i, MAX_POSITION){
                                 if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
                                     if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true){
                                         ataco = &campos[i].carregada;
@@ -282,7 +282,7 @@ int main(void){
                             }
 
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
-                                for (int i=0; i<MAX_POSITION; i++){ 
+                                FOR(i, MAX_POSITION){ 
                                     if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
                                         if (camposInimigos[i].vazia == false){
                                             camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
@@ -295,7 +295,7 @@ int main(void){
                             }
 
                             if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
-                                for(int i = 0; i<MAX_POSITION; i++){
+                                FOR(i, MAX_POSITION){
                                     if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))){ 
                                         if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
                                             campos[i].carregada = arrasto;
@@ -309,7 +309,7 @@ int main(void){
                         }
                         if(IsKeyPressed(KEY_S)){
                             bool temShield;
-                            for(int i = 0; i<MAX_POSITION; i++){
+                            FOR(i, MAX_POSITION){
                                 if(campos[i].carregada.shield == true){
                                     temShield = true;
                                     break;
@@ -323,7 +323,7 @@ int main(void){
                         }
                         if(shield){
                             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                                for(int i = 0; i<MAX_POSITION; i++){
+                                FOR(i, MAX_POSITION){
                                     if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
                                         if(mana>=campos[i].carregada.cost+1){
                                             campos[i].carregada.shield = true;
@@ -344,7 +344,7 @@ int main(void){
                         }
                         if(charge){
                             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                                for(int i = 0; i<MAX_POSITION; i++){
+                                FOR(i, MAX_POSITION){
                                     if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
                                         if(mana>=campos[i].carregada.cost-1){                                            
                                             campos[i].carregada.atk *= 1.2;
@@ -368,7 +368,7 @@ int main(void){
                     case TURNO_INIMIGO:
                         //--RMB--
                         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-                            for(int i = 0; i<MAX_POSITION; i++){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
+                            FOR(i, MAX_POSITION){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
                                 if((CheckCollisionPointRec(GetMousePosition(), campos[i].area) && campos[i].vazia == false)){
                                     campos[i].carregada.hp -= 1000;
                                 }
@@ -378,7 +378,7 @@ int main(void){
                         if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
                             bool meuOcupado = false;
                             bool inimigoOcupado = false;
-                            for (int i = 0; i < 6; i++) { //Verifica se as posicoes dos campos estao ocupadas
+                            FOR(i, MAX_POSITION) { //Verifica se as posicoes dos campos estao ocupadas
                                 if (campos[i].vazia == false){
                                     meuOcupado= true;
                                 }
@@ -428,14 +428,14 @@ int main(void){
                             if(mana < MAX_MANA){
                                 mana +=1;
                             }
-                            for(int i=0; i< MAX_POSITION; i++){
+                            FOR(i, MAX_POSITION){
                                 if(mao[i].vazia == false){
                                     mao[i].carregada.lock = false;
                                 }
                                 if(campos[i].carregada.shield == true){
                                     campos[i].carregada.shield = false;
                                 }
-                                for(int j=0;j<MAX_CATALOGO; j++){
+                                FOR(j, MAX_CATALOGO){
                                     if(strcmp(campos[i].carregada.nome,catalogo[j].nome) == 0){
                                         campos[i].carregada.atk = catalogo[j].atk;
                                         break;
@@ -451,9 +451,9 @@ int main(void){
                 }
 
                 //Cards Updates
-                for (int i=0; i<MAX_POSITION; i++){
+                FOR(i, MAX_POSITION){
                     if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
-                        for(int j = 0; j<MAX_DECK; j++){
+                        FOR(j, MAX_DECK){
                             if(cemiterio.cartas[j].id == 0){
                                 cemiterio.cartas[j] = campos[i].carregada; //Carta morta e atribuida ao cemiterio
                                 campos[i].carregada = (Carta){0}; //A posicao dela e limpa
@@ -559,7 +559,7 @@ int main(void){
                     DrawRectangleRoundedLines(cemiterio.area, 0.15f, 6, (Color){90, 90, 90, 255});
 
                     //Posicoes
-                    for (int i = 0; i < MAX_POSITION; i++) {
+                    FOR(i, MAX_POSITION) {
                         if (campos[i].vazia) {
                             DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){25, 35, 48, 160});
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
@@ -584,7 +584,7 @@ int main(void){
 
                     //Mao
                     if (alterMao) {
-                        for (int i = 0; i < MAX_POSITION; i++) {
+                        FOR(i, MAX_POSITION) {
                             DrawRectangleRounded(mao[i].area, 0.12f, 6, (Color){20, 28, 40, 180});
                             DrawRectangleRoundedLines(mao[i].area, 0.12f, 6, (Color){140, 180, 240, 100});
                             if (!mao[i].vazia) {
@@ -620,21 +620,21 @@ int main(void){
 
                     //Desenha as infos da carta que seu mouse esta 'sobrevoando'
                     Carta *cartaFocada = NULL;
-                    for (int i=0; i<MAX_POSITION; i++){
+                    FOR(i, MAX_POSITION){
                         if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
                             if (campos[i].vazia == false){
                                 cartaFocada = &campos[i].carregada;
                             }
                         }
                     }
-                    for (int i=0; i<MAX_POSITION; i++){
+                    FOR(i, MAX_POSITION){
                         if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){
                             if (camposInimigos[i].vazia == false){
                                 cartaFocada = &camposInimigos[i].carregada;
                             }
                         }
                     }
-                    for (int i=0; i<MAX_POSITION; i++){
+                    FOR(i, MAX_POSITION){
                         if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
                             if (mao[i].vazia == false){
                                 cartaFocada = &mao[i].carregada;
@@ -664,7 +664,7 @@ int main(void){
             }
         EndDrawing();
     }
-    for (int i = 0; i < MAX_CATALOGO; i++) {
+    FOR(i, MAX_CATALOGO) {
         UnloadTexture(texturasCarregadas[i]);
     }
         CloseWindow();
