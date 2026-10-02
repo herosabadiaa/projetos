@@ -55,7 +55,7 @@ typedef enum GameState{
     JOGANDO
 } GameState;
 
-typedef struct CartaCSV{
+typedef struct CartaCSV{ //Estrutura para catalogo
     char nome[64];
     int hp;
     int atk;
@@ -84,20 +84,20 @@ int main(void){
     deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
     Deck deckInimigo;
         
-    CartaCSV catalogo[MAX_CATALOGO];
-    Texture2D texturasCarregadas[MAX_CATALOGO];
+    CartaCSV catalogo[MAX_CATALOGO]; //Instancia o catalogo
+    Texture2D texturasCarregadas[MAX_CATALOGO]; //Instancia o catalogo de texturas
     int cartaCarregando = 0;
     char linha[256];
 
-    FILE *arquivo = fopen("cards.csv", "r");
+    FILE *arquivo = fopen("cards.csv", "r"); //Abre o arquivo em leitura
     if (arquivo == NULL) {
         printf("Erro ao abrir\n");
     }
 
-    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
-        linha[strcspn(linha, "\r\n")] = '\0';
-        char *pedaco = strtok(linha, ",");
-        strncpy(catalogo[cartaCarregando].nome, pedaco, sizeof(catalogo[cartaCarregando].nome) - 1);
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) { //Ler linha por linha ate a ultima
+        linha[strcspn(linha, "\r\n")] = '\0'; //remove quebras de linhas
+        char *pedaco = strtok(linha, ",");//pega o as partes divididas pela ,
+        strncpy(catalogo[cartaCarregando].nome, pedaco, sizeof(catalogo[cartaCarregando].nome) - 1); // atribui a informacao a uma carta do catalogo
         pedaco = strtok(NULL, ",");
         catalogo[cartaCarregando].hp = atoi(pedaco);
         pedaco = strtok(NULL, ",");
@@ -110,7 +110,7 @@ int main(void){
     }
     fclose(arquivo);
 
-    FOR(i, cartaCarregando) {
+    FOR(i, cartaCarregando) {//Percorre o catalogo pegando os paths e atribuindo as texturas 
         Image img = LoadImage(catalogo[i].caminhoTextura);
         ImageResize(&img, 96, 144);
         texturasCarregadas[i] = LoadTextureFromImage(img);
@@ -119,18 +119,18 @@ int main(void){
 
     srand(time(NULL));
     FOR(i,MAX_DECK) {
-        int escolhido = rand() % MAX_CATALOGO;
+        int escolhido = rand() % MAX_CATALOGO; //Seleciona cartas aleatorias do catalogo e atribui ao deck
         strncpy(deck.cartas[i].nome, catalogo[escolhido].nome, sizeof(deck.cartas[i].nome) - 1);
         deck.cartas[i].hp = catalogo[escolhido].hp;
         deck.cartas[i].atk = catalogo[escolhido].atk;
         deck.cartas[i].cost = catalogo[escolhido].mana;
         deck.cartas[i].textura = texturasCarregadas[escolhido];
         deck.cartas[i].id = i + 1;
-        deck.cartas[i].lock = true;
+        deck.cartas[i].lock = true; //Impede jogar a carta no mesmo turno da compra
         deck.cartas[i].shield = false;
     }
     FOR(i, MAX_DECK) {
-        int escolhido = rand() % MAX_CATALOGO;
+        int escolhido = rand() % MAX_CATALOGO; //Seleciona cartas aleatorias do catalogo e atribui ao deck inimigo
         strncpy(deckInimigo.cartas[i].nome, catalogo[escolhido].nome, sizeof(deckInimigo.cartas[i].nome) - 1);
         deckInimigo.cartas[i].hp = catalogo[escolhido].hp;
         deckInimigo.cartas[i].atk = catalogo[escolhido].atk;
@@ -156,14 +156,14 @@ int main(void){
     bool alterMao = false; //Bool para controlar a visibilidade da mao
     bool compradoTurno = false; //Flag para controlar a comprar por rodada
     bool atacadoTurno = false; //Flag para controlar o ataque por rodada
-    bool atacadoTurnoEnemy = false;
-    bool shield = false;
+    bool atacadoTurnoEnemy = false; //Flag para controlar o ataque inimigo
+    bool shield = false; //Flag para controlar qnd vc ativa o modo shield
     bool fecharJogo = false;
-    int mana = MAX_MANA;
+    int mana = MAX_MANA; //Mana max do jogador
     int hp = 8000;
     int hpInimigo = 8000;
-    bool charge = false;
-    bool chargeTurno = false;
+    bool charge = false; //Flag para controlar qnd vc atica o modo charge
+    bool chargeTurno = false; //Flag para verificar se já foi realizado um charge no turno
 
 
     Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
@@ -250,15 +250,15 @@ int main(void){
                                 }
                             }
                             int ocupadas = 0;
-                            FOR(i, MAX_POSITION){
+                            FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
                                 if(!campos[i].vazia){
                                     ocupadas +=1;
                                 }
                             }
                             FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
-                                    if(ocupadas == 6){
-                                        mana += (int)(mao[i].carregada.cost*0.5);
+                                    if(ocupadas == 6){ //Se todas posicoes do meu campo estiverem ocupadas, ao clicar descarto a carta e recupero metade de seu custo
+                                        mana += (int)(mao[i].carregada.cost*0.5); //Adiciona a minha mana metade do custo da carta
                                         mao[i].vazia = true;                                        
                                         mao[i].carregada = (Carta){0};
                                     }else if (mao[i].carregada.lock == false){
@@ -273,7 +273,7 @@ int main(void){
                                     }
                                 }
                             }
-                            FOR(i, MAX_POSITION){
+                            FOR(i, MAX_POSITION){//Serve para atacar, pega a carta sobrevoada no clique
                                 if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
                                     if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true){
                                         ataco = &campos[i].carregada;
@@ -307,9 +307,9 @@ int main(void){
                                 }
                             }
                         }
-                        if(IsKeyPressed(KEY_S)){
+                        if(IsKeyPressed(KEY_S)){ //Ao clicar S ativa o modo shield
                             bool temShield;
-                            FOR(i, MAX_POSITION){
+                            FOR(i, MAX_POSITION){ //Verifica se algumas das cartas em campo esta com shield
                                 if(campos[i].carregada.shield == true){
                                     temShield = true;
                                     break;
@@ -322,33 +322,33 @@ int main(void){
                             }
                         }
                         if(shield){
-                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                                FOR(i, MAX_POSITION){
+                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Se o modo shield estiver ativo
+                                FOR(i, MAX_POSITION){ //Ao clicar na carta, o atributo shield se ativa, e vc gasta mana
                                     if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
                                         if(mana>=campos[i].carregada.cost+1){
-                                            campos[i].carregada.shield = true;
-                                            mana -= (campos[i].carregada.cost+1);
+                                            campos[i].carregada.shield = true; //Ativa o shield
+                                            mana -= (campos[i].carregada.cost+1); //Cobra a mana
                                             shield = false;
                                             break;
                                         }
-                                    } else{
+                                    } else{ //Ao clicar no nada, vc desativa o modo shield
                                         shield = false;
                                     }
                                 }
                             }
                         }
-                        if(IsKeyPressed(KEY_D)){
+                        if(IsKeyPressed(KEY_D)){ //Ativa o charge
                             if(!chargeTurno){
                                 charge = true;
                             }
                         }
                         if(charge){
                             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                                FOR(i, MAX_POSITION){
+                                FOR(i, MAX_POSITION){ //Ao clicar em uma carta com o charge, ela ganha um buff de 1.2 no atk por um round
                                     if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
                                         if(mana>=campos[i].carregada.cost-1){                                            
-                                            campos[i].carregada.atk *= 1.2;
-                                            if(campos[i].carregada.cost < 2){
+                                            campos[i].carregada.atk *= 1.2;//Altera o atk
+                                            if(campos[i].carregada.cost < 2){ //Verifica o custo da carta, para impedir mana negativa
                                                 mana -= (campos[i].carregada.cost);
                                             }else{
                                                 mana -= (campos[i].carregada.cost-1);
@@ -425,17 +425,17 @@ int main(void){
                             compradoTurno = false;  //Me permite comprar outra carta
                             atacadoTurno = false;
                             chargeTurno = false;
-                            if(mana < MAX_MANA){
+                            if(mana < MAX_MANA){ //Adiciona mana ao final do round
                                 mana +=1;
                             }
                             FOR(i, MAX_POSITION){
                                 if(mao[i].vazia == false){
-                                    mao[i].carregada.lock = false;
+                                    mao[i].carregada.lock = false; //Tira o lock das cartas
                                 }
-                                if(campos[i].carregada.shield == true){
+                                if(campos[i].carregada.shield == true){ //Remove o shield 
                                     campos[i].carregada.shield = false;
                                 }
-                                FOR(j, MAX_CATALOGO){
+                                FOR(j, MAX_CATALOGO){ //Remove o buff do charge, comparando a carta atual com a do catalogo
                                     if(strcmp(campos[i].carregada.nome,catalogo[j].nome) == 0){
                                         campos[i].carregada.atk = catalogo[j].atk;
                                         break;
