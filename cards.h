@@ -80,39 +80,8 @@ typedef struct {
 // Functions Headers
 //----------------------------------------------------------------------------------
 
+int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]);
 
-Node* criar_lista(void);
+void catalogo_textura(CartaCSV catalogo[MAX_CATALOGO], Texture2D texturasCarregadas[MAX_CATALOGO], int cartaCarregando);
 
-/**
- * Insere um novo valor no início da lista (imediatamente após o nó cabeçalho).
- */
-bool inserir_inicio(Cabecalho encadeada, int valor);
-
-/**
- * Insere um novo valor ao final da lista encadeada.
- */
-bool inserir_fim(Cabecalho encadeada, int valor);
-
-/**
- * Busca a primeira ocorrência de um determinado valor na lista encadeada.
- * Retorna o ponteiro para o nó correspondente ou NULL caso não seja localizado.
- */
-Node* buscar(Cabecalho encadeada, int valor);
-
-/**
- * Remove a primeira ocorrência de um determinado valor na lista.
- * Retorna true em caso de remoção bem-sucedida ou false se o valor for inexistente.
- */
-bool remover(Cabecalho encadeada, int valor);
-
-/**
- * Percorre e imprime os elementos da lista encadeada.
- */
-void exibir_lista(Cabecalho encadeada);
-
-/**
- * Libera sistematicamente toda a memória alocada dinamicamente, incluindo o nó sentinela.
- */
-void destruir_lista(Cabecalho encadeada);
-
-#endif /* LISTA_H */
+#endif /* CARDS_H */

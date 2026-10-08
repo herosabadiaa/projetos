@@ -2,6 +2,7 @@
 // Libraries
 //----------------------------------------------------------------------------------
 #include "raylib.h"
+#include "cards.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -84,38 +85,11 @@ int main(void){
     deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
     Deck deckInimigo;
         
-    CartaCSV catalogo[MAX_CATALOGO]; //Instancia o catalogo
-    Texture2D texturasCarregadas[MAX_CATALOGO]; //Instancia o catalogo de texturas
-    int cartaCarregando = 0;
-    char linha[256];
+    CartaCSV catalogo[MAX_CATALOGO];
+    Texture2D texturasCarregadas[MAX_CATALOGO];
 
-    FILE *arquivo = fopen("cards.csv", "r"); //Abre o arquivo em leitura
-    if (arquivo == NULL) {
-        printf("Erro ao abrir\n");
-    }
-
-    while (fgets(linha, sizeof(linha), arquivo) != NULL) { //Ler linha por linha ate a ultima
-        linha[strcspn(linha, "\r\n")] = '\0'; //remove quebras de linhas
-        char *pedaco = strtok(linha, ",");//pega o as partes divididas pela ,
-        strncpy(catalogo[cartaCarregando].nome, pedaco, sizeof(catalogo[cartaCarregando].nome) - 1); // atribui a informacao a uma carta do catalogo
-        pedaco = strtok(NULL, ",");
-        catalogo[cartaCarregando].hp = atoi(pedaco);
-        pedaco = strtok(NULL, ",");
-        catalogo[cartaCarregando].atk = atoi(pedaco);
-        pedaco = strtok(NULL, ",");
-        catalogo[cartaCarregando].mana = atoi(pedaco);
-        pedaco = strtok(NULL, ",");
-        strncpy(catalogo[cartaCarregando].caminhoTextura, pedaco, sizeof(catalogo[cartaCarregando].caminhoTextura) - 1);
-        cartaCarregando++;
-    }
-    fclose(arquivo);
-
-    FOR(i, cartaCarregando) {//Percorre o catalogo pegando os paths e atribuindo as texturas 
-        Image img = LoadImage(catalogo[i].caminhoTextura);
-        ImageResize(&img, 96, 144);
-        texturasCarregadas[i] = LoadTextureFromImage(img);
-        UnloadImage(img);
-    }
+    int cartaCarregando = criar_catalogo(catalogo);
+    catalogo_textura(catalogo, texturasCarregadas, cartaCarregando);
 
     srand(time(NULL));
     FOR(i,MAX_DECK) {
@@ -145,7 +119,7 @@ int main(void){
     // Game Entities Initialization
     //------------------------------------------------------------------------------    
     Posicao mao[MAX_POSITION] = {0}; //Instancia a mao
-    FOR(i, MAX_POSITION)){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
+    FOR(i, MAX_POSITION){ //Percorre a mao atribuindo uma posicao para cada posicao, e definindo a posicao como vazia
         mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (136*i)+109, screenHeight/2+screenHeight/64 +18, 96, 144};
         mao[i].vazia = true;
     }
@@ -588,8 +562,7 @@ int main(void){
                             DrawRectangleRounded(mao[i].area, 0.12f, 6, (Color){20, 28, 40, 180});
                             DrawRectangleRoundedLines(mao[i].area, 0.12f, 6, (Color){140, 180, 240, 100});
                             if (!mao[i].vazia) {
-                                DrawTexture(mao[i].carregada.textura, mao[i].area.x, mao[i].area.y, WHITE);
-                            }
+                                DrawTexturePro(mao[i].carregada.textura, (Rectangle){0, 0, mao[i].carregada.textura.width, mao[i].carregada.textura.height}, (Rectangle){mao[i].area.x, mao[i].area.y, 96.0f, 144.0f}, (Vector2){0, 0}, 0.0f, WHITE);                            }
                         }
                     }
 
@@ -607,9 +580,8 @@ int main(void){
 
                     //Arrasto
                     if (arrasto.id != 0) {
-                        DrawTexture(arrasto.textura, arrasto.cordenada.x, arrasto.cordenada.y, WHITE);
+                        DrawTexturePro(arrasto.textura, (Rectangle){0, 0, arrasto.textura.width, arrasto.textura.height}, (Rectangle){arrasto.cordenada.x, arrasto.cordenada.y, 96.0f, 144.0f}, (Vector2){0, 0}, 0.0f, WHITE);
                     }
-
                     //Cards Info
                     char ataque[32];
                     if (ataco != NULL){
