@@ -1,7 +1,19 @@
 {
   "python-envs.defaultEnvManager": "ms-python.python:system",
   "customFileOrder.rules": {
-    ".": ["important-config.json", "src", "tests"],
-    "src": ["index.ts", "utils.ts"]
-  }
+        ".": {
+            "order": [
+                "main.c",
+                "cards.c",
+                "cards.h",
+                "cards.csv",
+                "resources",
+                "readme.md",
+                ".vscode",
+                "CMakeLists.txt",
+                "CMakeUserPresets.json",
+                "conanfile.txt"
+            ]
+        }
+    }
 }
