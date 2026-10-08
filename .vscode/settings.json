@@ -1,3 +1,7 @@
 {
-    "python-envs.defaultEnvManager": "ms-python.python:system"
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "customFileOrder.rules": {
+    ".": ["important-config.json", "src", "tests"],
+    "src": ["index.ts", "utils.ts"]
+  }
 }
