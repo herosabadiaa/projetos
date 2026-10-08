@@ -9,6 +9,7 @@
                 "cards.csv",
                 "resources",
                 "readme.md",
+                "build",
                 ".vscode",
                 "CMakeLists.txt",
                 "CMakeUserPresets.json",
