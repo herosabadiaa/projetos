@@ -1,0 +1,1 @@
+magick mogrify -format png -define png:format=png *.png

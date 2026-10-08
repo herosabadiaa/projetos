@@ -1,0 +1,118 @@
+//----------------------------------------------------------------------------------
+// Libraries & etc.
+//----------------------------------------------------------------------------------
+#ifndef CARDS_H
+#define CARDS_H
+
+#include <stdio.h>
+#include "raylib.h"
+#include <stdlib.h>
+#include <stdbool.h>
+
+//----------------------------------------------------------------------------------
+// Some Defines
+//----------------------------------------------------------------------------------
+#define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
+#define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
+#define MAX_CATALOGO 131
+#define MAX_MANA 200
+
+#define FOR(i,n) for(int i=0; i<n;i++)
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+
+typedef struct Carta { //Estruura de uma carta
+    Texture2D textura; //Textura da carta
+    Vector2 cordenada; //Onde a carta se localiza
+    int id; //Id único 
+    int hp; //Vida da carta
+    int atk; //Ataque da carta
+    int cost;
+    bool lock;
+    bool shield; 
+    char nome[64];
+} Carta;
+
+typedef struct Posicao { //Estrutura de posições no campo
+    Rectangle area; //Local que ocupa da tela
+    Carta carregada; //Carta que esta tribuida
+    bool vazia; //Posicao vazia?
+} Posicao;
+
+typedef struct Deck { //Estrutura do deck
+    Rectangle area; //Local que ocupa da tela
+    Carta cartas[MAX_DECK]; //Lista de cartas
+} Deck;
+
+typedef enum TurnState{ //Estrutura de estados
+    TURNO_JOGADOR, //Estado do meu turno
+    TURNO_INIMIGO //Estado do turno inimigo
+} TurnState;
+
+typedef enum GameState{
+    MENU,
+    JOGANDO
+} GameState;
+
+typedef struct CartaCSV{ //Estrutura para catalogo
+    char nome[64];
+    int hp;
+    int atk;
+    int mana;
+    char caminhoTextura[128];
+} CartaCSV;
+
+typedef struct Node {
+    int data;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    struct Node *inicio;
+    struct Node *fim;
+    int len;
+} Cabecalho;
+
+
+//----------------------------------------------------------------------------------
+// Functions Headers
+//----------------------------------------------------------------------------------
+
+
+Node* criar_lista(void);
+
+/**
+ * Insere um novo valor no início da lista (imediatamente após o nó cabeçalho).
+ */
+bool inserir_inicio(Cabecalho encadeada, int valor);
+
+/**
+ * Insere um novo valor ao final da lista encadeada.
+ */
+bool inserir_fim(Cabecalho encadeada, int valor);
+
+/**
+ * Busca a primeira ocorrência de um determinado valor na lista encadeada.
+ * Retorna o ponteiro para o nó correspondente ou NULL caso não seja localizado.
+ */
+Node* buscar(Cabecalho encadeada, int valor);
+
+/**
+ * Remove a primeira ocorrência de um determinado valor na lista.
+ * Retorna true em caso de remoção bem-sucedida ou false se o valor for inexistente.
+ */
+bool remover(Cabecalho encadeada, int valor);
+
+/**
+ * Percorre e imprime os elementos da lista encadeada.
+ */
+void exibir_lista(Cabecalho encadeada);
+
+/**
+ * Libera sistematicamente toda a memória alocada dinamicamente, incluindo o nó sentinela.
+ */
+void destruir_lista(Cabecalho encadeada);
+
+#endif /* LISTA_H */
