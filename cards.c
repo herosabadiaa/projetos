@@ -46,3 +46,26 @@ void catalogo_textura(CartaCSV catalogo[MAX_CATALOGO], Texture2D texturasCarrega
         UnloadImage(img);
     }
 }
+
+bool cemiterio_inserir(ListaCemiterio *lista, Carta carta) {
+    Node *novo = (Node *)malloc(sizeof(Node));
+    if (novo == NULL) {
+        return false;
+    }
+    novo->carta = carta;
+    novo->next = lista->inicio;
+    lista->inicio = novo;
+    lista->tamanho++;
+    return true;
+}
+
+void cemiterio_remover(ListaCemiterio *lista) {
+    Node *atual = lista->inicio;
+    while (atual != NULL) {
+        Node *proximo = atual->next;
+        free(atual);
+        atual = proximo;
+    }
+    lista->inicio = NULL;
+    lista->tamanho = 0;
+}

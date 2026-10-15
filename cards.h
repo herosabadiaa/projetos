@@ -17,7 +17,7 @@
 #define MAX_CATALOGO 131
 #define MAX_MANA 200
 
-#define FOR(i,n) for(int i=0; i<n;i++)
+#define FOR(i,n) for(int i=0; i<(n);i++)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -65,17 +65,14 @@ typedef struct CartaCSV{ //Estrutura para catalogo
 } CartaCSV;
 
 typedef struct Node {
-    int data;
+    Carta carta;
     struct Node *next;
 } Node;
 
-typedef struct {
-    struct Node *inicio;
-    struct Node *fim;
-    int len;
-} Cabecalho;
-
-
+typedef struct ListaCemiterio { 
+    Node *inicio;
+    int tamanho;
+} ListaCemiterio;
 //----------------------------------------------------------------------------------
 // Functions Headers
 //----------------------------------------------------------------------------------
@@ -83,5 +80,9 @@ typedef struct {
 int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]);
 
 void catalogo_textura(CartaCSV catalogo[MAX_CATALOGO], Texture2D texturasCarregadas[MAX_CATALOGO], int cartaCarregando);
+
+bool cemiterio_inserir(ListaCemiterio *lista, Carta carta);
+
+void cemiterio_remover(ListaCemiterio *lista);
 
 #endif /* CARDS_H */

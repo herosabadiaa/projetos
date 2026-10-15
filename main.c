@@ -9,61 +9,6 @@
 #include <time.h>
 #include <string.h>
 
-//----------------------------------------------------------------------------------
-// Some Defines
-//----------------------------------------------------------------------------------
-#define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
-#define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
-#define MAX_CATALOGO 131
-#define MAX_MANA 200
-
-#define FOR(i,n) for(int i=0; i<(n);i++)
-
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
-
-typedef struct Carta { //Estruura de uma carta
-    Texture2D textura; //Textura da carta
-    Vector2 cordenada; //Onde a carta se localiza
-    int id; //Id único 
-    int hp; //Vida da carta
-    int atk; //Ataque da carta
-    int cost;
-    bool lock;
-    bool shield; 
-    char nome[64];
-} Carta;
-
-typedef struct Posicao { //Estrutura de posições no campo
-    Rectangle area; //Local que ocupa da tela
-    Carta carregada; //Carta que esta tribuida
-    bool vazia; //Posicao vazia?
-} Posicao;
-
-typedef struct Deck { //Estrutura do deck
-    Rectangle area; //Local que ocupa da tela
-    Carta cartas[MAX_DECK]; //Lista de cartas
-} Deck;
-
-typedef enum TurnState{ //Estrutura de estados
-    TURNO_JOGADOR, //Estado do meu turno
-    TURNO_INIMIGO //Estado do turno inimigo
-} TurnState;
-
-typedef enum GameState{
-    MENU,
-    JOGANDO
-} GameState;
-
-typedef struct CartaCSV{ //Estrutura para catalogo
-    char nome[64];
-    int hp;
-    int atk;
-    int mana;
-    char caminhoTextura[128];
-} CartaCSV;
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -87,6 +32,8 @@ int main(void){
         
     CartaCSV catalogo[MAX_CATALOGO];
     Texture2D texturasCarregadas[MAX_CATALOGO];
+
+    ListaCemiterio listaCemiterio = {0};
 
     int cartaCarregando = criar_catalogo(catalogo);
     catalogo_textura(catalogo, texturasCarregadas, cartaCarregando);
@@ -426,22 +373,17 @@ int main(void){
 
                 //Cards Updates
                 FOR(i, MAX_POSITION){
-                    if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
-                        FOR(j, MAX_DECK){
-                            if(cemiterio.cartas[j].id == 0){
-                                cemiterio.cartas[j] = campos[i].carregada; //Carta morta e atribuida ao cemiterio
-                                campos[i].carregada = (Carta){0}; //A posicao dela e limpa
-                                campos[i].vazia = true; //A posicao e definida como vazia
-                                quantMorta += 1;
-                                break;
-                            }
-                        }
+                    if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){
+                        cemiterio_inserir(&listaCemiterio, campos[i].carregada); //Carta morta vai para a lista
+                        campos[i].carregada = (Carta){0}; //A posicao dela e limpa
+                        campos[i].vazia = true; //A posicao e definida como vazia
+                        quantMorta += 1;
                         break;
                     }
-                    if (camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].vazia == false){ //Se houver uma carta carregada com a vida menor ou igual a 0, ele vai para o cemiterio
-                        camposInimigos[i].carregada = (Carta){0}; //A posicao dela e limpa
-                        camposInimigos[i].vazia = true; //A posicao e definida como vazia
-                        mana +=2;
+                    if (camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].vazia == false){
+                        camposInimigos[i].carregada = (Carta){0};
+                        camposInimigos[i].vazia = true;
+                        mana += 2;
                         break;
                     }
                 }  
@@ -639,6 +581,7 @@ int main(void){
     FOR(i, MAX_CATALOGO) {
         UnloadTexture(texturasCarregadas[i]);
     }
+    cemiterio_remover(&listaCemiterio);
         CloseWindow();
     return 0;
 }
