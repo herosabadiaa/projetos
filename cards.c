@@ -65,7 +65,7 @@ Deck carregar_deck(Texture2D texturasCarregadas[MAX_CATALOGO], CartaCSV catalogo
     return deck;
 }
 
-void criar_posicao(Posicao campos[],int screenWidth, int screenHeight, float y){
+void criar_posicao(Posicao campos[MAX_POSITION],int screenWidth, int screenHeight, float y){
     FOR(i, MAX_POSITION){
         campos[i].area.x = i*screenWidth/MAX_POSITION;
         campos[i].area.y = y*screenHeight/4;

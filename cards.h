@@ -83,7 +83,7 @@ void catalogo_textura(CartaCSV catalogo[MAX_CATALOGO], Texture2D texturasCarrega
 
 Deck carregar_deck(Texture2D texturasCarregadas[MAX_CATALOGO], CartaCSV catalogo[MAX_CATALOGO]);
 
-void criar_posicao(Posicao campos[],int screenWidth, int screenHeight, float y);
+void criar_posicao(Posicao campos[MAX_POSITION],int screenWidth, int screenHeight, float y);
 
 bool cemiterio_inserir(CemiterioEncad *cemiterio, Carta carta);
 
