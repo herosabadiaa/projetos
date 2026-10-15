@@ -65,24 +65,11 @@ int main(void){
     bool charge = false; //Flag para controlar qnd vc atica o modo charge
     bool chargeTurno = false; //Flag para verificar se já foi realizado um charge no turno
 
+    Posicao campos[MAX_POSITION];
+    Posicao camposInimigos[MAX_POSITION];
+    criar_posicao(campos, screenWidth, screenHeight, 2.8);
+    criar_posicao(camposInimigos, screenWidth, screenHeight, 0.7);
 
-    Posicao campos[MAX_POSITION]; //Instancia as posicoes do campo
-    FOR(i, MAX_POSITION){
-        campos[i].area.x = i*screenWidth/MAX_POSITION;
-        campos[i].area.y = 2.8*screenHeight/4;
-        campos[i].area.width = 192;
-        campos[i].area.height =288;
-        campos[i].vazia = true;
-    }
-
-    Posicao camposInimigos[MAX_POSITION]; //Instancia as posicoes do campo inimigo
-    FOR(i, MAX_POSITION){
-        camposInimigos[i].area.x = i*screenWidth/MAX_POSITION;
-        camposInimigos[i].area.y = 0.7  *screenHeight/4;
-        camposInimigos[i].area.width = 192;
-        camposInimigos[i].area.height =288;
-        camposInimigos[i].vazia = true;
-    }
 
     Deck cemiterio; //Estrutura do cemiterio
     cemiterio = (Deck){0};

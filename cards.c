@@ -65,6 +65,16 @@ Deck carregar_deck(Texture2D texturasCarregadas[MAX_CATALOGO], CartaCSV catalogo
     return deck;
 }
 
+void criar_posicao(Posicao campos[],int screenWidth, int screenHeight, float y){
+    FOR(i, MAX_POSITION){
+        campos[i].area.x = i*screenWidth/MAX_POSITION;
+        campos[i].area.y = y*screenHeight/4;
+        campos[i].area.width = 192;
+        campos[i].area.height =288;
+        campos[i].vazia = true;
+    }
+}
+
 bool cemiterio_inserir(CemiterioEncad *cemiterio, Carta carta) {
     Node *novo = (Node *)malloc(sizeof(Node));
     if (novo == NULL) {
