@@ -15,9 +15,9 @@
 #define MAX_DECK 60 //Define o maximo de cartas num deck/cemiterio
 #define MAX_POSITION 6//Define o maximo de posicoes e cartas na mao
 #define MAX_CATALOGO 131
-#define MAX_MANA 200
+#define MAX_MANA 20
 
-#define FOR(i,n) for(int i=0; i<(n);i++)
+#define FOR(i,n) for(int i=0; i<n;i++)
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -69,10 +69,10 @@ typedef struct Node {
     struct Node *next;
 } Node;
 
-typedef struct ListaCemiterio { 
+typedef struct CemiterioEncad { 
     Node *inicio;
     int tamanho;
-} ListaCemiterio;
+} CemiterioEncad;
 //----------------------------------------------------------------------------------
 // Functions Headers
 //----------------------------------------------------------------------------------
@@ -81,8 +81,10 @@ int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]);
 
 void catalogo_textura(CartaCSV catalogo[MAX_CATALOGO], Texture2D texturasCarregadas[MAX_CATALOGO], int cartaCarregando);
 
-bool cemiterio_inserir(ListaCemiterio *lista, Carta carta);
+Deck carregar_deck(Texture2D texturasCarregadas[MAX_CATALOGO], CartaCSV catalogo[MAX_CATALOGO]);
 
-void cemiterio_remover(ListaCemiterio *lista);
+bool cemiterio_inserir(CemiterioEncad *cemiterio, Carta carta);
+
+void cemiterio_remover(CemiterioEncad *cemiterio);
 
 #endif /* CARDS_H */

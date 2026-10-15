@@ -47,25 +47,43 @@ void catalogo_textura(CartaCSV catalogo[MAX_CATALOGO], Texture2D texturasCarrega
     }
 }
 
-bool cemiterio_inserir(ListaCemiterio *lista, Carta carta) {
+
+
+Deck carregar_deck(Texture2D texturasCarregadas[MAX_CATALOGO], CartaCSV catalogo[MAX_CATALOGO]){
+    Deck deck;
+    FOR(i,MAX_DECK) {
+        int escolhido = rand() % MAX_CATALOGO; //Seleciona cartas aleatorias do catalogo e atribui ao deck
+        strncpy(deck.cartas[i].nome, catalogo[escolhido].nome, sizeof(deck.cartas[i].nome) - 1);
+        deck.cartas[i].hp = catalogo[escolhido].hp;
+        deck.cartas[i].atk = catalogo[escolhido].atk;
+        deck.cartas[i].cost = catalogo[escolhido].mana;
+        deck.cartas[i].textura = texturasCarregadas[escolhido];
+        deck.cartas[i].id = i + 1;
+        deck.cartas[i].lock = true; //Impede jogar a carta no mesmo turno da compra
+        deck.cartas[i].shield = false;
+    }
+    return deck;
+}
+
+bool cemiterio_inserir(CemiterioEncad *cemiterio, Carta carta) {
     Node *novo = (Node *)malloc(sizeof(Node));
     if (novo == NULL) {
         return false;
     }
     novo->carta = carta;
-    novo->next = lista->inicio;
-    lista->inicio = novo;
-    lista->tamanho++;
+    novo->next = cemiterio->inicio;
+    cemiterio->inicio = novo;
+    cemiterio->tamanho++;
     return true;
 }
 
-void cemiterio_remover(ListaCemiterio *lista) {
-    Node *atual = lista->inicio;
+void cemiterio_remover(CemiterioEncad *cemiterio) {
+    Node *atual = cemiterio->inicio;
     while (atual != NULL) {
         Node *proximo = atual->next;
         free(atual);
         atual = proximo;
     }
-    lista->inicio = NULL;
-    lista->tamanho = 0;
+    cemiterio->inicio = NULL;
+    cemiterio->tamanho = 0;
 }

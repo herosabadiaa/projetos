@@ -4,7 +4,7 @@ project(jogo)
 find_package(raylib REQUIRED)
 
 
-add_executable(${PROJECT_NAME} main.c )
+add_executable(${PROJECT_NAME} main.c cards.c )
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
