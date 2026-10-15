@@ -26,41 +26,20 @@ int main(void){
     //------------------------------------------------------------------------------
     // Deck & Images Initialization
     //------------------------------------------------------------------------------
-    Deck deck; //Instancia o Deck
-    deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
-    Deck deckInimigo;
         
     CartaCSV catalogo[MAX_CATALOGO];
     Texture2D texturasCarregadas[MAX_CATALOGO];
 
-    ListaCemiterio listaCemiterio = {0};
+    CemiterioEncad CemiterioEncad = {0};
 
     int cartaCarregando = criar_catalogo(catalogo);
     catalogo_textura(catalogo, texturasCarregadas, cartaCarregando);
 
     srand(time(NULL));
-    FOR(i,MAX_DECK) {
-        int escolhido = rand() % MAX_CATALOGO; //Seleciona cartas aleatorias do catalogo e atribui ao deck
-        strncpy(deck.cartas[i].nome, catalogo[escolhido].nome, sizeof(deck.cartas[i].nome) - 1);
-        deck.cartas[i].hp = catalogo[escolhido].hp;
-        deck.cartas[i].atk = catalogo[escolhido].atk;
-        deck.cartas[i].cost = catalogo[escolhido].mana;
-        deck.cartas[i].textura = texturasCarregadas[escolhido];
-        deck.cartas[i].id = i + 1;
-        deck.cartas[i].lock = true; //Impede jogar a carta no mesmo turno da compra
-        deck.cartas[i].shield = false;
-    }
-    FOR(i, MAX_DECK) {
-        int escolhido = rand() % MAX_CATALOGO; //Seleciona cartas aleatorias do catalogo e atribui ao deck inimigo
-        strncpy(deckInimigo.cartas[i].nome, catalogo[escolhido].nome, sizeof(deckInimigo.cartas[i].nome) - 1);
-        deckInimigo.cartas[i].hp = catalogo[escolhido].hp;
-        deckInimigo.cartas[i].atk = catalogo[escolhido].atk;
-        deckInimigo.cartas[i].cost = catalogo[escolhido].mana;
-        deckInimigo.cartas[i].textura = texturasCarregadas[escolhido];
-        deckInimigo.cartas[i].id = i + 1;
-        deckInimigo.cartas[i].lock = true;
-        deckInimigo.cartas[i].shield = false;
-    }
+    Deck deck = carregar_deck(texturasCarregadas, catalogo);
+    deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
+
+    Deck deckInimigo = carregar_deck(texturasCarregadas, catalogo);
      
     //------------------------------------------------------------------------------
     // Game Entities Initialization
@@ -374,7 +353,7 @@ int main(void){
                 //Cards Updates
                 FOR(i, MAX_POSITION){
                     if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){
-                        cemiterio_inserir(&listaCemiterio, campos[i].carregada); //Carta morta vai para a lista
+                        cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
                         campos[i].carregada = (Carta){0}; //A posicao dela e limpa
                         campos[i].vazia = true; //A posicao e definida como vazia
                         quantMorta += 1;
@@ -581,7 +560,7 @@ int main(void){
     FOR(i, MAX_CATALOGO) {
         UnloadTexture(texturasCarregadas[i]);
     }
-    cemiterio_remover(&listaCemiterio);
+    cemiterio_remover(&CemiterioEncad);
         CloseWindow();
     return 0;
 }
