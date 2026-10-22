@@ -75,6 +75,16 @@ void criar_posicao(Posicao campos[MAX_POSITION],int screenWidth, int screenHeigh
     }
 }
 
+void preencher_mao(Posicao mao[MAX_POSITION], Deck *deck){
+    FOR(i, MAX_POSITION){ //Inicializa a mao com 6 cartas iniciais
+        mao[i].carregada = deck->cartas[deck->quant_puxada];
+        mao[i].carregada.lock = false; 
+        deck->cartas[deck->quant_puxada] = (Carta){0};        
+        mao[i].vazia = false;
+        deck->quant_puxada += 1;
+    }   
+}
+
 bool cemiterio_inserir(CemiterioEncad *cemiterio, Carta carta) {
     Node *novo = (Node *)malloc(sizeof(Node));
     if (novo == NULL) {
@@ -96,4 +106,25 @@ void cemiterio_remover(CemiterioEncad *cemiterio) {
     }
     cemiterio->inicio = NULL;
     cemiterio->tamanho = 0;
+}
+
+void comprar_carta(Posicao mao[MAX_POSITION], Deck *deck){
+    FOR(i, MAX_POSITION){ 
+        if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
+            Carta disponivel;
+            int j;
+            FOR(j, MAX_DECK){
+                if(deck->cartas[j].id != 0){
+                    disponivel = deck->cartas[j]; //Ve qual carta esta disponivel, ascendente
+                    break;
+                }
+            }
+            mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
+            deck->cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
+            mao[i].vazia = false; //A posicao da mao fica cheia
+            deck->quant_puxada += 1;
+            deck->compradoTurno = true;
+            break;
+        }
+    }
 }
