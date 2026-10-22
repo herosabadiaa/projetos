@@ -8,6 +8,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -26,10 +27,8 @@ int main(void){
     //------------------------------------------------------------------------------
     // Deck & Images Initialization
     //------------------------------------------------------------------------------
-        
     CartaCSV catalogo[MAX_CATALOGO];
     Texture2D texturasCarregadas[MAX_CATALOGO];
-
     CemiterioEncad CemiterioEncad = {0};
 
     int cartaCarregando = criar_catalogo(catalogo);
@@ -37,9 +36,11 @@ int main(void){
 
     srand(time(NULL));
     Deck deck = carregar_deck(texturasCarregadas, catalogo);
+    deck.quant_puxada = 0;
+    deck.compradoTurno = false;
     deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
-
     Deck deckInimigo = carregar_deck(texturasCarregadas, catalogo);
+    deckInimigo.quant_puxada = 0;
      
     //------------------------------------------------------------------------------
     // Game Entities Initialization
@@ -49,12 +50,12 @@ int main(void){
         mao[i].area = (Rectangle){(screenWidth/2-screenWidth/4) + (136*i)+109, screenHeight/2+screenHeight/64 +18, 96, 144};
         mao[i].vazia = true;
     }
-    int quantPuxada = 0; //Intancia a variavel que conta qnts vezes uma carta foi puxada
+    Posicao maoInimigo[MAX_POSITION] = {0};
     int quantMorta = 0; //Variavel q mostra qnts cartas morreram
     Carta arrasto = {0};
     Carta *ataco = NULL;
     bool alterMao = false; //Bool para controlar a visibilidade da mao
-    bool compradoTurno = false; //Flag para controlar a comprar por rodada
+    bool blockAtack = true;
     bool atacadoTurno = false; //Flag para controlar o ataque por rodada
     bool atacadoTurnoEnemy = false; //Flag para controlar o ataque inimigo
     bool shield = false; //Flag para controlar qnd vc ativa o modo shield
@@ -64,6 +65,7 @@ int main(void){
     int hpInimigo = 8000;
     bool charge = false; //Flag para controlar qnd vc atica o modo charge
     bool chargeTurno = false; //Flag para verificar se já foi realizado um charge no turno
+    bool colocouInimigo = false;
 
     Posicao campos[MAX_POSITION];
     Posicao camposInimigos[MAX_POSITION];
@@ -82,15 +84,8 @@ int main(void){
     Rectangle jogar = {screenWidth/2 - 264, screenHeight/2 + 48, 528, 120}; //Cria o botao de iniciar o jogo
     Rectangle fechar = {screenWidth/2 - 264, screenHeight/2 + 216, 528, 120}; //Cria o botao para fechar o jogo
 
-    FOR(i, MAX_POSITION){ //Inicializa o deck com 6 cartas iniciais
-        mao[i].carregada = deck.cartas[quantPuxada];
-        mao[i].carregada.lock = false; 
-        camposInimigos[i].carregada = deckInimigo.cartas[quantPuxada];
-        camposInimigos[i].vazia = false;
-        deck.cartas[quantPuxada] = (Carta){0};        
-        mao[i].vazia = false;
-        quantPuxada += 1;
-    }   
+    preencher_mao(mao, &deck);
+    preencher_mao(maoInimigo, &deckInimigo);
 
     while(!WindowShouldClose() && !fecharJogo){
         Vector2 mousePosition = GetMousePosition(); //Pega a posicao do mouse
@@ -114,8 +109,8 @@ int main(void){
                         }
                         //--LMB--
                         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
-                            if(quantPuxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
-                                if (CheckCollisionPointRec(GetMousePosition(), deck.area) && compradoTurno == false){ //Checa a colisão entre o mouse e deck
+                            if(deck.quant_puxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
+                                if (CheckCollisionPointRec(GetMousePosition(), deck.area) && deck.compradoTurno == false){ //Checa a colisão entre o mouse e deck
                                     FOR(i, MAX_POSITION){ 
                                         if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
                                             Carta disponivel;
@@ -129,8 +124,8 @@ int main(void){
                                             mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
                                             deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
                                             mao[i].vazia = false; //A posicao da mao fica cheia
-                                            quantPuxada += 1;
-                                            compradoTurno = true;
+                                            deck.quant_puxada += 1;
+                                            deck.compradoTurno = true;
                                             break;
                                         }
                                     }
@@ -160,14 +155,15 @@ int main(void){
                                     }
                                 }
                             }
-                            FOR(i, MAX_POSITION){//Serve para atacar, pega a carta sobrevoada no clique
-                                if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
-                                    if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true){
-                                        ataco = &campos[i].carregada;
+                            if(!blockAtack){
+                                FOR(i, MAX_POSITION){//Serve para atacar, pega a carta sobrevoada no clique
+                                    if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                                        if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true){
+                                            ataco = &campos[i].carregada;
+                                        }
                                     }
                                 }
                             }
-
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
                                 FOR(i, MAX_POSITION){ 
                                     if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
@@ -261,7 +257,36 @@ int main(void){
                                 }
                             }       
                         }
-
+                        if(!colocouInimigo){
+                            colocouInimigo = true;
+                            int qnt_colocar = (rand()%2)+1;
+                            int qnt_mao = 0;
+                            int check = 0;
+                            FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
+                                if(!maoInimigo[i].vazia){
+                                    qnt_mao +=1;
+                                }
+                            }
+                            if(qnt_colocar>qnt_mao){
+                                qnt_colocar = qnt_mao;
+                            }
+                            FOR(i, MAX_POSITION){
+                                if(check < qnt_colocar){
+                                    FOR(j, MAX_POSITION){
+                                        if(!maoInimigo[i].vazia){
+                                            if(camposInimigos[j].vazia){
+                                                camposInimigos[j].carregada = maoInimigo[i].carregada;
+                                                camposInimigos[j].vazia = false;
+                                                check += 1;
+                                                maoInimigo[i].vazia = true;                                        
+                                                maoInimigo[i].carregada = (Carta){0};
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }                        
                         if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
                             bool meuOcupado = false;
                             bool inimigoOcupado = false;
@@ -307,9 +332,13 @@ int main(void){
                         if(turnState == TURNO_JOGADOR){
                             turnState = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
                             atacadoTurnoEnemy = false;
+                            if(blockAtack){
+                                blockAtack = false;
+                            }
                         } else {
                             turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
-                            compradoTurno = false;  //Me permite comprar outra carta
+                            colocouInimigo = false;
+                            deck.compradoTurno = false;  //Me permite comprar outra carta
                             atacadoTurno = false;
                             chargeTurno = false;
                             if(mana < MAX_MANA){ //Adiciona mana ao final do round
@@ -529,7 +558,7 @@ int main(void){
 
                     }
 
-                    DrawText(TextFormat("DECK: %d/%d", MAX_DECK-quantPuxada, MAX_DECK), 6.5*screenWidth/8, 48, 48, (Color){220, 230, 240, 255});
+                    DrawText(TextFormat("DECK: %d/%d", MAX_DECK-deck.quant_puxada, MAX_DECK), 6.5*screenWidth/8, 48, 48, (Color){220, 230, 240, 255});
                     DrawText(TextFormat("MANA: %d/%d", mana, MAX_MANA), 6.5*screenWidth/8, 96, 48, (Color){220, 230, 240, 255});
 
                     char turnoText[64]; //Dsenha em que turno o jogo esta
