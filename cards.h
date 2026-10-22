@@ -43,6 +43,8 @@ typedef struct Posicao { //Estrutura de posições no campo
 
 typedef struct Deck { //Estrutura do deck
     Rectangle area; //Local que ocupa da tela
+    int quant_puxada;
+    bool compradoTurno;
     Carta cartas[MAX_DECK]; //Lista de cartas
 } Deck;
 
@@ -88,5 +90,9 @@ void criar_posicao(Posicao campos[MAX_POSITION],int screenWidth, int screenHeigh
 bool cemiterio_inserir(CemiterioEncad *cemiterio, Carta carta);
 
 void cemiterio_remover(CemiterioEncad *cemiterio);
+
+void preencher_mao(Posicao mao[MAX_POSITION], Deck *deck);
+
+void comprar_carta(Posicao mao[MAX_POSITION], Deck *deck);
 
 #endif /* CARDS_H */
