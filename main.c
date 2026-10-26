@@ -41,6 +41,7 @@ int main(void){
     deck.area = (Rectangle){screenWidth-120, screenHeight-120, 120, 120}; //Define a area que o deck ocupara
     Deck deckInimigo = carregar_deck(texturasCarregadas, catalogo);
     deckInimigo.quant_puxada = 0;
+    deckInimigo.compradoTurno = false;
      
     //------------------------------------------------------------------------------
     // Game Entities Initialization
@@ -257,6 +258,9 @@ int main(void){
                                 }
                             }       
                         }
+                        if(!deckInimigo.compradoTurno && deckInimigo.quant_puxada < MAX_DECK){
+                            comprar_carta(maoInimigo, &deckInimigo); 
+                        }   
                         if(!colocouInimigo){
                             colocouInimigo = true;
                             int qnt_colocar = (rand()%2)+1;
@@ -339,6 +343,7 @@ int main(void){
                             turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
                             colocouInimigo = false;
                             deck.compradoTurno = false;  //Me permite comprar outra carta
+                            deckInimigo.compradoTurno = false;
                             atacadoTurno = false;
                             chargeTurno = false;
                             if(mana < MAX_MANA){ //Adiciona mana ao final do round

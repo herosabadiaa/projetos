@@ -113,7 +113,7 @@ void comprar_carta(Posicao mao[MAX_POSITION], Deck *deck){
         if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
             Carta disponivel;
             int j;
-            FOR(j, MAX_DECK){
+            for(j=0;j<MAX_DECK;j++){
                 if(deck->cartas[j].id != 0){
                     disponivel = deck->cartas[j]; //Ve qual carta esta disponivel, ascendente
                     break;
