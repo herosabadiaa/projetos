@@ -67,6 +67,9 @@ int main(void){
     bool charge = false; //Flag para controlar qnd vc atica o modo charge
     bool chargeTurno = false; //Flag para verificar se já foi realizado um charge no turno
     bool colocouInimigo = false;
+    int ocupadas = 0;
+    int ocupadasInimigos = 0;
+    bool atkHP = false;
 
     Posicao campos[MAX_POSITION];
     Posicao camposInimigos[MAX_POSITION];
@@ -132,10 +135,12 @@ int main(void){
                                     }
                                 }
                             }
-                            int ocupadas = 0;
                             FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
                                 if(!campos[i].vazia){
                                     ocupadas +=1;
+                                }
+                                if(!camposInimigos[i].vazia){
+                                    ocupadasInimigos +=1;
                                 }
                             }
                             FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
@@ -159,11 +164,14 @@ int main(void){
                             if(!blockAtack){
                                 FOR(i, MAX_POSITION){//Serve para atacar, pega a carta sobrevoada no clique
                                     if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
-                                        if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true){
+                                        if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true && campos[i].carregada.tipo == MONSTER){
                                             ataco = &campos[i].carregada;
                                         }
                                     }
                                 }
+                            }
+                            if(!blockAtack && ocupadasInimigos == 0 &&atacadoTurno == false){
+                                atkHP = true;
                             }
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
                                 FOR(i, MAX_POSITION){ 
@@ -172,8 +180,7 @@ int main(void){
                                             camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
                                             ataco = NULL;
                                             atacadoTurno = true;
-                                        }
-                                        
+                                        }                                         
                                     }
                                 }
                             }
@@ -203,6 +210,7 @@ int main(void){
                             }
                             if(temShield == false){
                                 shield = true;
+                                charge = false;
                             }
                         }
                         if(shield){
@@ -224,6 +232,7 @@ int main(void){
                         if(IsKeyPressed(KEY_D)){ //Ativa o charge
                             if(!chargeTurno){
                                 charge = true;
+                                shield = false;
                             }
                         }
                         if(charge){
@@ -263,7 +272,13 @@ int main(void){
                         }   
                         if(!colocouInimigo){
                             colocouInimigo = true;
-                            int qnt_colocar = (rand()%2)+1;
+                            int chance = rand()%10;
+                            int qnt_colocar;
+                            if (chance < 4){
+                                qnt_colocar = 2;
+                            } else{
+                                qnt_colocar = 1;
+                            }
                             int qnt_mao = 0;
                             int check = 0;
                             FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
@@ -313,7 +328,7 @@ int main(void){
                                 }
                                 while (true){
                                     escolhaInimigo = rand() %6; //Sorteia uma posicao
-                                    if(camposInimigos[escolhaInimigo].vazia == false){ //Verifica se a posicao sorteada esta ocupada
+                                    if(camposInimigos[escolhaInimigo].vazia == false && camposInimigos[escolhaInimigo].carregada.tipo == MONSTER){ //Verifica se a posicao sorteada esta ocupada
                                         break;
                                     }
                                 }
@@ -335,6 +350,7 @@ int main(void){
                     if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
                         if(turnState == TURNO_JOGADOR){
                             turnState = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
+                            ataco = NULL;
                             atacadoTurnoEnemy = false;
                             if(blockAtack){
                                 blockAtack = false;
@@ -528,7 +544,7 @@ int main(void){
                     char ataque[32];
                     if (ataco != NULL){
                         snprintf(ataque, sizeof(ataque), "ATK: %d", ataco->atk);
-                        DrawText(ataque, 336, 24, 48, (Color){255, 0, 0, 155});
+                        DrawText(ataque, 500, 110, 48, (Color){255, 0, 0, 155});
                     }
 
 
@@ -570,10 +586,22 @@ int main(void){
                     if (turnState == TURNO_JOGADOR) {
                         snprintf(turnoText, sizeof(turnoText), "SEU TURNO");
                     } else {
-                        snprintf(turnoText, sizeof(turnoText), "TURNO INIMIGO");
+                        snprintf(turnoText, sizeof(turnoText), "TURNO RIVAL");
                     }
 
                     DrawText(turnoText, (screenWidth/2) - (MeasureText(turnoText, 58)/2), 48, 58, (Color){220, 230, 240, 255});
+                    DrawText(TextFormat("HP: %d", hp), 500, 48, 58, (Color){0, 128, 0, 255});
+                    DrawText(TextFormat("HP: %d", hpInimigo), 1180, 48, 58, (Color){255, 0, 0, 255});
+                    if(atkHP){
+                        Rectangle life = {1180, 48, 244, 54};
+                        DrawRectangle(life.x, life.y, life.width, life.height, (Color){255, 255, 0, 25});
+
+                    }
+                    if(charge){
+                        DrawText("CHARGE", screenWidth/2 - (MeasureText(turnoText, 58)/2), 110, 48, (Color){0, 0, 255, 255});
+                    }else if(shield){
+                        DrawText("SHIELD", screenWidth/2 - (MeasureText(turnoText, 58)/2), 110, 48, (Color){255, 255, 0, 255});
+                    }
                 break;    
             }
         EndDrawing();
