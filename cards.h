@@ -23,6 +23,13 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
+typedef enum TipoCarta {
+    MONSTER,
+    SPELL,
+    TRAP_GLOBAL,
+    TRAP_SINGLE
+} TipoCarta;
+
 typedef struct Carta { //Estruura de uma carta
     Texture2D textura; //Textura da carta
     Vector2 cordenada; //Onde a carta se localiza
@@ -31,7 +38,8 @@ typedef struct Carta { //Estruura de uma carta
     int atk; //Ataque da carta
     int cost;
     bool lock;
-    bool shield; 
+    bool shield;
+    TipoCarta tipo; 
     char nome[64];
 } Carta;
 
@@ -64,6 +72,7 @@ typedef struct CartaCSV{ //Estrutura para catalogo
     int atk;
     int mana;
     char caminhoTextura[128];
+    TipoCarta tipo;
 } CartaCSV;
 
 typedef struct Node {
