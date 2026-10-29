@@ -135,14 +135,6 @@ int main(void){
                                     }
                                 }
                             }
-                            FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
-                                if(!campos[i].vazia){
-                                    ocupadas +=1;
-                                }
-                                if(!camposInimigos[i].vazia){
-                                    ocupadasInimigos +=1;
-                                }
-                            }
                             FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
                                 if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
                                     if(ocupadas == 6){ //Se todas posicoes do meu campo estiverem ocupadas, ao clicar descarto a carta e recupero metade de seu custo
@@ -169,9 +161,6 @@ int main(void){
                                         }
                                     }
                                 }
-                            }
-                            if(!blockAtack && ocupadasInimigos == 0 &&atacadoTurno == false){
-                                atkHP = true;
                             }
                             if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
                                 FOR(i, MAX_POSITION){ 
@@ -262,8 +251,8 @@ int main(void){
                         //--RMB--
                         if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
                             FOR(i, MAX_POSITION){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
-                                if((CheckCollisionPointRec(GetMousePosition(), campos[i].area) && campos[i].vazia == false)){
-                                    campos[i].carregada.hp -= 1000;
+                                if((CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area) && camposInimigos[i].vazia == false)){
+                                    camposInimigos[i].carregada.hp -= 1000;
                                 }
                             }       
                         }
@@ -343,7 +332,21 @@ int main(void){
                 }
                 //--------------------------------------------------------------------------
                 // Global features    
-                //--------------------------------------------------------------------------    
+                //--------------------------------------------------------------------------
+                ocupadas = 0;
+                ocupadasInimigos = 0;    
+                FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
+                    if(!campos[i].vazia){
+                        ocupadas +=1;
+                    }
+                    if(!camposInimigos[i].vazia){
+                        ocupadasInimigos +=1;
+                    }
+                }
+
+                if(blockAtack == false && ocupadasInimigos == 0 && atacadoTurno == false){
+                    atkHP = true;
+                }
 
                 //--LMB--
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Alterna entre os turnos ao clicar no botao de alterar turno
