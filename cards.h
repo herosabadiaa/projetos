@@ -26,9 +26,42 @@
 typedef enum TipoCarta {
     MONSTER,
     SPELL,
-    TRAP_GLOBAL,
-    TRAP_SINGLE
+    TRAP
 } TipoCarta;
+
+typedef enum SubCarta {
+    DRAGON,
+    TOON,
+    SPELLCASTER,
+    WARRIOR,
+    BEASTWARRIOR,
+    FAIRY,
+    FIEND,
+
+    BEAST,
+    WINGEDBEAST,
+    INSECT,
+    PLANT,
+    REPTILE,
+    DINOSAUR,
+    FISH,
+    SEASERPENT,
+    AQUA,
+    PYRO,
+    THUNDER,
+    ROCK,
+
+    MACHINE,
+    ZOMBIE,
+
+    PSYCHIC,
+    CYBERSE,
+    WYRM,
+
+    DIVINEBEAST,
+    ILLUSION
+
+} SubCarta;
 
 typedef struct Carta { //Estruura de uma carta
     Texture2D textura; //Textura da carta
@@ -39,7 +72,8 @@ typedef struct Carta { //Estruura de uma carta
     int cost;
     bool lock;
     bool shield;
-    TipoCarta tipo; 
+    TipoCarta tipo;
+    SubCarta subTipo; 
     char nome[64];
 } Carta;
 
