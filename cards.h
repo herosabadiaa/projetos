@@ -29,6 +29,14 @@ typedef enum TipoCarta {
     TRAP
 } TipoCarta;
 
+typedef enum SpellCarta {
+    SPELL_DRAW,
+    SPELL_SEARCH,
+    SPELL_DESTRUCTION,
+    SPELL_RESURRECTION,
+    SPELL_CURE,
+} EfeitoCarta;
+
 typedef enum SubCarta {
     DRAGON,
     TOON,

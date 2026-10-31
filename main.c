@@ -87,6 +87,8 @@ int main(void){
 
     Rectangle jogar = {screenWidth/2 - 264, screenHeight/2 + 48, 528, 120}; //Cria o botao de iniciar o jogo
     Rectangle fechar = {screenWidth/2 - 264, screenHeight/2 + 216, 528, 120}; //Cria o botao para fechar o jogo
+    Rectangle life = {1180, 48, 244, 54};
+
 
     preencher_mao(mao, &deck);
     preencher_mao(maoInimigo, &deckInimigo);
@@ -170,6 +172,12 @@ int main(void){
                                             ataco = NULL;
                                             atacadoTurno = true;
                                         }                                         
+                                    }
+                                }
+                                if(atkHP){
+                                    if(CheckCollisionPointRec(GetMousePosition(),life)){
+                                        hpInimigo -= ataco->atk;
+                                        turnState = TURNO_INIMIGO;
                                     }
                                 }
                             }
@@ -344,6 +352,7 @@ int main(void){
                     }
                 }
 
+                atkHP=false;
                 if(blockAtack == false && ocupadasInimigos == 0 && atacadoTurno == false){
                     atkHP = true;
                 }
@@ -392,14 +401,14 @@ int main(void){
 
                 //Cards Updates
                 FOR(i, MAX_POSITION){
-                    if (campos[i].carregada.hp <= 0 && campos[i].vazia == false){
+                    if ((campos[i].carregada.hp <= 0 && campos[i].carregada.tipo==MONSTER)&& campos[i].vazia == false){
                         cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
                         campos[i].carregada = (Carta){0}; //A posicao dela e limpa
                         campos[i].vazia = true; //A posicao e definida como vazia
                         quantMorta += 1;
                         break;
                     }
-                    if (camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].vazia == false){
+                    if ((camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].carregada.tipo == MONSTER)&& camposInimigos[i].vazia == false){
                         camposInimigos[i].carregada = (Carta){0};
                         camposInimigos[i].vazia = true;
                         mana += 2;
@@ -596,7 +605,6 @@ int main(void){
                     DrawText(TextFormat("HP: %d", hp), 500, 48, 58, (Color){0, 128, 0, 255});
                     DrawText(TextFormat("HP: %d", hpInimigo), 1180, 48, 58, (Color){255, 0, 0, 255});
                     if(atkHP){
-                        Rectangle life = {1180, 48, 244, 54};
                         DrawRectangle(life.x, life.y, life.width, life.height, (Color){255, 255, 0, 25});
 
                     }
