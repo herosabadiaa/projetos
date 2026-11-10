@@ -1,6 +1,11 @@
+import sys
 from pathlib import Path
 
 import streamlit as st
+
+APP_DIR = Path(__file__).resolve().parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 
 from deck_builder import (
     MAX_DECK_SIZE,
@@ -13,7 +18,7 @@ from deck_builder import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = APP_DIR.parents[1]
 
 
 @st.cache_data
