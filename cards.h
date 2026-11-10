@@ -101,6 +101,7 @@ typedef struct Deck { //Estrutura do deck
 typedef enum TurnState{ //Estrutura de estados
     TURNO_JOGADOR, //Estado do meu turno
     TURNO_INIMIGO //Estado do turno inimigo
+    
 } TurnState;
 
 typedef enum GameState{

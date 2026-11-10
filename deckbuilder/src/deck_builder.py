@@ -1,5 +1,6 @@
 import csv
 import io
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -81,6 +82,18 @@ def load_catalog(path: Path) -> tuple[Card, ...]:
 
 def deck_size(deck: Mapping[str, int]) -> int:
     return sum(deck.values())
+
+
+def draw_hand(deck: Mapping[str, int], hand_size: int) -> list[str]:
+    if hand_size < 1:
+        raise ValueError("A mão deve conter pelo menos 1 carta.")
+    if any(quantity < 0 for quantity in deck.values()):
+        raise ValueError("As quantidades do deck não podem ser negativas.")
+    if hand_size > deck_size(deck):
+        raise ValueError("A mão não pode ser maior que o deck.")
+
+    cards = [name for name, quantity in deck.items() for _ in range(quantity)]
+    return random.sample(cards, hand_size)
 
 
 def parse_deck_csv(content: bytes, catalog: tuple[Card, ...]) -> dict[str, int]:

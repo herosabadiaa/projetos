@@ -69,6 +69,7 @@ int main(void){
     bool colocouInimigo = false;
     int ocupadas = 0;
     int ocupadasInimigos = 0;
+    int chargeDraw;
     bool atkHP = false;
 
     Posicao campos[MAX_POSITION];
@@ -238,6 +239,7 @@ int main(void){
                                     if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
                                         if(mana>=campos[i].carregada.cost-1){                                            
                                             campos[i].carregada.atk *= 1.2;//Altera o atk
+                                            chargeDraw = i;
                                             if(campos[i].carregada.cost < 2){ //Verifica o custo da carta, para impedir mana negativa
                                                 mana -= (campos[i].carregada.cost);
                                             }else{
@@ -612,6 +614,9 @@ int main(void){
                         DrawText("CHARGE", screenWidth/2 - (MeasureText(turnoText, 58)/2), 110, 48, (Color){0, 0, 255, 255});
                     }else if(shield){
                         DrawText("SHIELD", screenWidth/2 - (MeasureText(turnoText, 58)/2), 110, 48, (Color){255, 255, 0, 255});
+                    }
+                    if(chargeTurno == true){
+                        DrawRectangle(campos[chargeDraw].area.x, campos[chargeDraw].area.y, campos[chargeDraw].area.width, campos[chargeDraw].area.height, (Color){0, 0, 255, 120});
                     }
                 break;    
             }

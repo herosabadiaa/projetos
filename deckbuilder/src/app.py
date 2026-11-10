@@ -6,6 +6,7 @@ from deck_builder import (
     MAX_DECK_SIZE,
     Card,
     deck_size,
+    draw_hand,
     export_deck_csv,
     load_catalog,
     parse_deck_csv,
@@ -22,7 +23,7 @@ def get_catalog() -> tuple[Card, ...]:
 
 st.set_page_config(page_title="Construtor de Deck", layout="wide")
 st.title("Construtor de Deck")
-st.caption("Monte seu deck com as cartas do catálogo do jogo e importe ou exporte em CSV.")
+st.caption("Explore as cartas, monte seu deck e teste uma mão inicial.")
 
 try:
     catalog = get_catalog()
@@ -34,6 +35,7 @@ if "deck" not in st.session_state:
     st.session_state.deck = {}
 
 catalog_names = {card.name for card in catalog}
+cards_by_name = {card.name: card for card in catalog}
 st.session_state.deck = {
     name: quantity
     for name, quantity in st.session_state.deck.items()
@@ -59,6 +61,13 @@ with catalog_column:
     selected_type = st.selectbox("Tipo", type_options)
     subtype_options = ["Todos"] + sorted({card.subtype for card in catalog})
     selected_subtype = st.selectbox("Subtipo", subtype_options)
+    sort_options = {
+        "Nome (A-Z)": lambda card: card.name.casefold(),
+        "Mana (menor primeiro)": lambda card: (card.mana, card.name.casefold()),
+        "ATK (maior primeiro)": lambda card: (-card.atk, card.name.casefold()),
+        "HP (maior primeiro)": lambda card: (-card.hp, card.name.casefold()),
+    }
+    sort_label = st.selectbox("Ordenar por", list(sort_options))
     mana_values = [card.mana for card in catalog]
     minimum_mana, maximum_mana = st.slider(
         "Faixa de mana",
@@ -67,14 +76,18 @@ with catalog_column:
         value=(min(mana_values), max(mana_values)),
     )
 
-    filtered_cards = [
-        card
-        for card in catalog
-        if search.casefold() in card.name.casefold()
-        and (selected_type == "Todos" or card.card_type == selected_type)
-        and (selected_subtype == "Todos" or card.subtype == selected_subtype)
-        and minimum_mana <= card.mana <= maximum_mana
-    ]
+    filtered_cards = sorted(
+        (
+            card
+            for card in catalog
+            if search.casefold() in card.name.casefold()
+            and (selected_type == "Todos" or card.card_type == selected_type)
+            and (selected_subtype == "Todos" or card.subtype == selected_subtype)
+            and minimum_mana <= card.mana <= maximum_mana
+        ),
+        key=sort_options[sort_label],
+    )
+    st.caption(f"{len(filtered_cards)} de {len(catalog)} cartas")
     if not filtered_cards:
         st.info("Nenhuma carta corresponde aos filtros.")
     else:
@@ -108,13 +121,47 @@ with catalog_column:
         ):
             deck = st.session_state.deck
             deck[selected_card.name] = deck.get(selected_card.name, 0) + 1
+            st.session_state.pop("test_hand", None)
             st.rerun()
 
 with deck_column:
     st.header("Meu deck")
     total_cards = deck_size(st.session_state.deck)
-    st.write(f"**{total_cards} / {MAX_DECK_SIZE} cartas**")
+    stat_columns = st.columns(2)
+    stat_columns[0].metric("Cartas", f"{total_cards} / {MAX_DECK_SIZE}")
+    average_mana = (
+        sum(cards_by_name[name].mana * quantity for name, quantity in st.session_state.deck.items())
+        / total_cards
+        if total_cards
+        else 0
+    )
+    stat_columns[1].metric("Mana médio", f"{average_mana:.1f}")
     st.progress(total_cards / MAX_DECK_SIZE)
+
+    if st.session_state.deck:
+        type_counts: dict[str, int] = {}
+        for name, quantity in st.session_state.deck.items():
+            card_type = cards_by_name[name].card_type
+            type_counts[card_type] = type_counts.get(card_type, 0) + quantity
+        with st.expander("Ver composição do deck"):
+            for card_type, quantity in sorted(type_counts.items()):
+                st.write(f"**{card_type}:** {quantity} carta(s)")
+
+    with st.expander("Testar mão inicial", expanded=False):
+        st.caption("Compre cartas aleatórias sem reposição. O deck não será alterado.")
+        initial_hand_size = min(5, total_cards) if total_cards else 1
+        hand_size = st.number_input(
+            "Tamanho da mão",
+            min_value=1,
+            max_value=max(1, total_cards),
+            value=initial_hand_size,
+            step=1,
+            disabled=not st.session_state.deck,
+        )
+        if st.button("Comprar mão", disabled=not st.session_state.deck):
+            st.session_state.test_hand = draw_hand(st.session_state.deck, hand_size)
+        if st.session_state.get("test_hand"):
+            st.write(" · ".join(st.session_state.test_hand))
 
     deck_upload = st.file_uploader("Importar deck em CSV", type=["csv"])
     if st.button("Importar deck", disabled=deck_upload is None):
@@ -124,6 +171,7 @@ with deck_column:
             st.error(f"Não foi possível importar o deck: {error}")
         else:
             st.session_state.deck = imported_deck
+            st.session_state.pop("test_hand", None)
             st.success(f"Deck importado com {deck_size(imported_deck)} cartas.")
 
     st.download_button(
@@ -137,13 +185,14 @@ with deck_column:
     if st.session_state.deck:
         st.divider()
         for name, quantity in list(st.session_state.deck.items()):
-            card = next(card for card in catalog if card.name == name)
+            card = cards_by_name[name]
             name_column, minus_column, count_column, plus_column, remove_column = st.columns(
                 [5, 0.7, 0.8, 0.7, 1.5]
             )
             name_column.write(f"**{name}**  \nATK {card.atk} · HP {card.hp} · Mana {card.mana}")
             if minus_column.button("-", key=f"minus_{name}", disabled=quantity <= 1):
                 st.session_state.deck[name] = quantity - 1
+                st.session_state.pop("test_hand", None)
                 st.rerun()
             count_column.write(f"x {quantity}")
             if plus_column.button(
@@ -152,13 +201,16 @@ with deck_column:
                 disabled=total_cards >= MAX_DECK_SIZE,
             ):
                 st.session_state.deck[name] = quantity + 1
+                st.session_state.pop("test_hand", None)
                 st.rerun()
             if remove_column.button("Remover", key=f"remove_{name}"):
                 del st.session_state.deck[name]
+                st.session_state.pop("test_hand", None)
                 st.rerun()
     else:
         st.info("Seu deck está vazio. Adicione cartas pelo catálogo ou importe um CSV.")
 
     if st.button("Limpar deck", disabled=not st.session_state.deck):
         st.session_state.deck = {}
+        st.session_state.pop("test_hand", None)
         st.rerun()

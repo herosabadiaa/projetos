@@ -22,7 +22,10 @@ O Streamlit exibirá o endereço local da aplicação no terminal.
 ## Utilização
 
 - Pesquise e filtre o catálogo por nome, tipo, subtipo e mana.
+- Ordene os resultados por nome, mana, ATK ou HP.
 - Adicione cartas ao deck e ajuste suas quantidades. O deck aceita até 60 cartas.
+- Consulte a quantidade de cartas, a mana média e a composição por tipo.
+- Simule uma mão inicial de tamanho configurável sem alterar o deck.
 - Importe decks em CSV com as colunas originais do catálogo (com ou sem cabeçalho)
   ou com as colunas `name,quantity`.
 - Exporte o deck em CSV no formato original do catálogo, sem cabeçalho e com uma
