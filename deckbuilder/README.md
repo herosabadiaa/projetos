@@ -39,3 +39,6 @@ instalação de dependências para usar `deckbuilder/requirements.txt`. O projet
 também inclui `deckbuilder/pyproject.toml` e `deckbuilder/uv.lock` para uso local
 com uv. O catálogo e as imagens continuam sendo lidos de `cards.csv` e
 `resources/` na raiz do repositório.
+
+## Aplicação
+https://projetos-9beqncb4osygzlurzqrxl9.streamlit.app/
