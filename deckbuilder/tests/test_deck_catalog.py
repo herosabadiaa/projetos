@@ -55,16 +55,25 @@ class DeckCatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exatamente 60"):
             save_deck(self.engine, "Incompleto", {"Carta": 1})
 
-    def test_searches_saved_decks_by_name_or_card(self) -> None:
+    def test_filters_saved_decks_by_name_and_selected_card(self) -> None:
         created_at = datetime.now()
         first_deck = SavedDeck(1, "Dragões", {"Dragão Branco": 60}, created_at)
         second_deck = SavedDeck(2, "Guerreiros", {"Mago Negro": 60}, created_at)
         saved_decks = (first_deck, second_deck)
 
-        self.assertEqual(search_saved_decks(saved_decks, "DRAG"), (first_deck,))
-        self.assertEqual(search_saved_decks(saved_decks, "mAgO nEgRo"), (second_deck,))
-        self.assertEqual(search_saved_decks(saved_decks, "  "), saved_decks)
-        self.assertEqual(search_saved_decks(saved_decks, "inexistente"), ())
+        self.assertEqual(
+            search_saved_decks(saved_decks, name_query="DRAG"),
+            (first_deck,),
+        )
+        self.assertEqual(
+            search_saved_decks(saved_decks, card_name="mAgO nEgRo"),
+            (second_deck,),
+        )
+        self.assertEqual(
+            search_saved_decks(saved_decks, name_query="drag", card_name="Mago Negro"),
+            (),
+        )
+        self.assertEqual(search_saved_decks(saved_decks), saved_decks)
 
     def test_explains_manual_setup_when_mysql_denies_table_creation(self) -> None:
         mysql_engine = SimpleNamespace(dialect=SimpleNamespace(name="mysql"))

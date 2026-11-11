@@ -223,11 +223,29 @@ with deck_column:
     st.divider()
     with st.expander("Catálogo de decks salvos"):
         if saved_decks:
-            saved_deck_search = st.text_input(
-                "Buscar deck por nome ou carta",
-                key="saved_deck_search",
+            name_query = st.text_input(
+                "Buscar deck por nome",
+                key="saved_deck_name_search",
             )
-            matching_saved_decks = search_saved_decks(saved_decks, saved_deck_search)
+            saved_card_names = sorted(
+                {name for saved_deck in saved_decks for name in saved_deck.cards},
+                key=str.casefold,
+            )
+            card_options = ["Todas as cartas", *saved_card_names]
+            selected_card_name = st.selectbox(
+                "Filtrar por carta (digite para buscar)",
+                card_options,
+                key="saved_deck_card_search",
+            )
+            matching_saved_decks = search_saved_decks(
+                saved_decks,
+                name_query=name_query,
+                card_name=(
+                    selected_card_name
+                    if selected_card_name != "Todas as cartas"
+                    else None
+                ),
+            )
             if matching_saved_decks:
                 saved_decks_by_name = {
                     saved_deck.name: saved_deck for saved_deck in matching_saved_decks

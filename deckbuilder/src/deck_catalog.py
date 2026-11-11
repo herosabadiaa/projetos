@@ -96,16 +96,26 @@ def list_saved_decks(engine: Engine) -> tuple[SavedDeck, ...]:
 
 
 def search_saved_decks(
-    saved_decks: tuple[SavedDeck, ...], query: str
+    saved_decks: tuple[SavedDeck, ...],
+    name_query: str = "",
+    card_name: str | None = None,
 ) -> tuple[SavedDeck, ...]:
-    normalized_query = query.strip().casefold()
-    if not normalized_query:
-        return saved_decks
+    normalized_name_query = name_query.strip().casefold()
+    normalized_card_name = card_name.casefold() if card_name else None
     return tuple(
         saved_deck
         for saved_deck in saved_decks
-        if normalized_query in saved_deck.name.casefold()
-        or any(normalized_query in card_name.casefold() for card_name in saved_deck.cards)
+        if (
+            not normalized_name_query
+            or normalized_name_query in saved_deck.name.casefold()
+        )
+        and (
+            normalized_card_name is None
+            or any(
+                saved_card.casefold() == normalized_card_name
+                for saved_card in saved_deck.cards
+            )
+        )
     )
 
 
