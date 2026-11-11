@@ -18,6 +18,8 @@ from deck_builder import (
     parse_deck_csv,
 )
 from deck_catalog import (
+    CREATE_DECK_CATALOG_SQL,
+    DeckCatalogSetupError,
     ensure_deck_catalog,
     list_saved_decks,
     save_deck,
@@ -46,6 +48,10 @@ except (OSError, ValueError) as error:
 try:
     ensure_deck_catalog(engine)
     saved_decks = list_saved_decks(engine)
+except DeckCatalogSetupError as error:
+    st.error(f"Não foi possível inicializar o catálogo de decks: {error}")
+    st.code(CREATE_DECK_CATALOG_SQL, language="sql")
+    st.stop()
 except (SQLAlchemyError, ValueError) as error:
     st.error(f"Não foi possível acessar o catálogo de decks no servidor: {error}")
     st.stop()

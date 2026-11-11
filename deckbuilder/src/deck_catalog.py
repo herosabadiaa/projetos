@@ -12,12 +12,30 @@ from sqlalchemy import (
     Table,
     Text,
     func,
+    inspect,
     select,
     update,
 )
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
 
 from deck_builder import MAX_DECK_SIZE, deck_size
+
+
+CREATE_DECK_CATALOG_SQL = """\
+CREATE TABLE deck_catalog (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    cards TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_deck_catalog_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+"""
+
+
+class DeckCatalogSetupError(RuntimeError):
+    pass
 
 
 metadata = MetaData()
@@ -40,7 +58,20 @@ class SavedDeck:
 
 
 def ensure_deck_catalog(engine: Engine) -> None:
-    metadata.create_all(engine)
+    if inspect(engine).has_table(decks_table.name):
+        return
+    try:
+        metadata.create_all(engine)
+    except OperationalError as error:
+        error_code = getattr(error.orig, "args", (None,))[0]
+        if engine.dialect.name == "mysql" and error_code == 1142:
+            if inspect(engine).has_table(decks_table.name):
+                return
+            raise DeckCatalogSetupError(
+                "O usuário do banco não tem permissão para criar a tabela. "
+                "Peça ao administrador para executar o SQL abaixo uma vez."
+            ) from error
+        raise
 
 
 def list_saved_decks(engine: Engine) -> tuple[SavedDeck, ...]:

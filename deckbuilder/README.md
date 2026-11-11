@@ -46,7 +46,23 @@ também inclui `deckbuilder/pyproject.toml` e `deckbuilder/uv.lock` para uso loc
 com uv. O catálogo e as imagens continuam sendo lidos de `cards.csv` e
 `resources/` na raiz do repositório. Configure `database.host`, `database.port`,
 `database.user`, `database.password` e `database.database` nos Streamlit Secrets
-para habilitar o catálogo de decks no servidor.
+para habilitar o catálogo de decks no servidor. O usuário do banco precisa ter
+permissão para criar tabelas. Se não tiver, peça ao administrador do banco para
+executar uma vez:
+
+```sql
+CREATE TABLE deck_catalog (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    cards TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_deck_catalog_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+Após a tabela ser criada, o usuário configurado pela aplicação precisa ter
+permissões de `SELECT`, `INSERT` e `UPDATE` nela.
 
 ## Aplicação
 https://projetos-9beqncb4osygzlurzqrxl9.streamlit.app/
