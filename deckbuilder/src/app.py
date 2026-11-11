@@ -36,6 +36,10 @@ def get_catalog() -> tuple[Card, ...]:
     return load_catalog(ROOT / "cards.csv")
 
 
+def format_card_label(card: Card) -> str:
+    return f"{card.name} | ATK {card.atk} | HP {card.hp} | Mana {card.mana}"
+
+
 st.set_page_config(page_title="Construtor de Deck", layout="wide")
 st.title("Construtor de Deck")
 st.caption("Explore as cartas, monte seu deck e teste uma mão inicial.")
@@ -117,10 +121,7 @@ with catalog_column:
     if not filtered_cards:
         st.info("Nenhuma carta corresponde aos filtros.")
     else:
-        card_by_label = {
-            f"{card.name} | ATK {card.atk} | HP {card.hp} | Mana {card.mana}": card
-            for card in filtered_cards
-        }
+        card_by_label = {format_card_label(card): card for card in filtered_cards}
         selected_label = st.selectbox("Carta", list(card_by_label))
         selected_card = card_by_label[selected_label]
 
@@ -231,20 +232,22 @@ with deck_column:
                 {name for saved_deck in saved_decks for name in saved_deck.cards},
                 key=str.casefold,
             )
-            card_options = ["Todas as cartas", *saved_card_names]
-            selected_card_name = st.selectbox(
-                "Filtrar por carta (digite para buscar)",
-                card_options,
+            saved_card_labels = {
+                format_card_label(cards_by_name[name])
+                if name in cards_by_name
+                else name: name
+                for name in saved_card_names
+            }
+            selected_card_label = st.selectbox(
+                "Filtrar por carta",
+                ["Todas as cartas", *saved_card_labels],
                 key="saved_deck_card_search",
             )
+            selected_card_name = saved_card_labels.get(selected_card_label)
             matching_saved_decks = search_saved_decks(
                 saved_decks,
                 name_query=name_query,
-                card_name=(
-                    selected_card_name
-                    if selected_card_name != "Todas as cartas"
-                    else None
-                ),
+                card_name=selected_card_name,
             )
             if matching_saved_decks:
                 saved_decks_by_name = {
