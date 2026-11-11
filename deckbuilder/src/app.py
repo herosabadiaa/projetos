@@ -23,6 +23,7 @@ from deck_catalog import (
     ensure_deck_catalog,
     list_saved_decks,
     save_deck,
+    search_saved_decks,
     update_saved_deck,
 )
 
@@ -222,42 +223,52 @@ with deck_column:
     st.divider()
     with st.expander("Catálogo de decks salvos"):
         if saved_decks:
-            saved_decks_by_name = {saved_deck.name: saved_deck for saved_deck in saved_decks}
-            selected_saved_name = st.selectbox(
-                "Deck salvo",
-                list(saved_decks_by_name),
-                key="selected_saved_deck_name",
+            saved_deck_search = st.text_input(
+                "Buscar deck por nome ou carta",
+                key="saved_deck_search",
             )
-            selected_saved_deck = saved_decks_by_name[selected_saved_name]
-            saved_deck_is_available = all(
-                name in cards_by_name for name in selected_saved_deck.cards
-            )
-            st.caption(
-                f"Criado em {selected_saved_deck.created_at:%d/%m/%Y %H:%M} · "
-                f"{deck_size(selected_saved_deck.cards)} cartas"
-            )
-            if not saved_deck_is_available:
-                st.error(
-                    "Este deck contém cartas que não existem mais no catálogo atual."
+            matching_saved_decks = search_saved_decks(saved_decks, saved_deck_search)
+            if matching_saved_decks:
+                saved_decks_by_name = {
+                    saved_deck.name: saved_deck for saved_deck in matching_saved_decks
+                }
+                selected_saved_name = st.selectbox(
+                    "Deck salvo",
+                    list(saved_decks_by_name),
+                    key="selected_saved_deck_name",
                 )
+                selected_saved_deck = saved_decks_by_name[selected_saved_name]
+                saved_deck_is_available = all(
+                    name in cards_by_name for name in selected_saved_deck.cards
+                )
+                st.caption(
+                    f"Criado em {selected_saved_deck.created_at:%d/%m/%Y %H:%M} · "
+                    f"{deck_size(selected_saved_deck.cards)} cartas"
+                )
+                if not saved_deck_is_available:
+                    st.error(
+                        "Este deck contém cartas que não existem mais no catálogo atual."
+                    )
+                else:
+                    st.download_button(
+                        "Baixar CSV do deck salvo",
+                        data=export_deck_csv(selected_saved_deck.cards, catalog),
+                        file_name=f"{selected_saved_deck.name}.csv",
+                        mime="text/csv",
+                        key=f"download_saved_deck_{selected_saved_deck.id}",
+                    )
+                if st.button(
+                    "Carregar para editar",
+                    key="load_saved_deck",
+                    disabled=not saved_deck_is_available,
+                ):
+                    st.session_state.deck = selected_saved_deck.cards.copy()
+                    st.session_state.editing_saved_deck_id = selected_saved_deck.id
+                    st.session_state.editing_saved_deck_name = selected_saved_deck.name
+                    st.session_state.pop("test_hand", None)
+                    st.rerun()
             else:
-                st.download_button(
-                    "Baixar CSV do deck salvo",
-                    data=export_deck_csv(selected_saved_deck.cards, catalog),
-                    file_name=f"{selected_saved_deck.name}.csv",
-                    mime="text/csv",
-                    key=f"download_saved_deck_{selected_saved_deck.id}",
-                )
-            if st.button(
-                "Carregar para editar",
-                key="load_saved_deck",
-                disabled=not saved_deck_is_available,
-            ):
-                st.session_state.deck = selected_saved_deck.cards.copy()
-                st.session_state.editing_saved_deck_id = selected_saved_deck.id
-                st.session_state.editing_saved_deck_name = selected_saved_deck.name
-                st.session_state.pop("test_hand", None)
-                st.rerun()
+                st.info("Nenhum deck corresponde à busca.")
         else:
             st.info("Ainda não há decks salvos no catálogo.")
 

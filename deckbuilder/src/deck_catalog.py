@@ -95,6 +95,20 @@ def list_saved_decks(engine: Engine) -> tuple[SavedDeck, ...]:
         )
 
 
+def search_saved_decks(
+    saved_decks: tuple[SavedDeck, ...], query: str
+) -> tuple[SavedDeck, ...]:
+    normalized_query = query.strip().casefold()
+    if not normalized_query:
+        return saved_decks
+    return tuple(
+        saved_deck
+        for saved_deck in saved_decks
+        if normalized_query in saved_deck.name.casefold()
+        or any(normalized_query in card_name.casefold() for card_name in saved_deck.cards)
+    )
+
+
 def save_deck(engine: Engine, name: str, cards: Mapping[str, int]) -> int:
     normalized_name = _validate_deck(name, cards)
     with engine.begin() as connection:
