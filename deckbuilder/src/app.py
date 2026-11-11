@@ -1,30 +1,13 @@
 import sys
 from pathlib import Path
-from sqlalchemy import text
-from database import engine
-
 import streamlit as st
-
-
-st.title("Teste de conexão MySQL")
-try:
-    with engine.connect() as conn:
-        resultado = conn.execute(
-            text("SELECT VERSION()")
-        )
-
-        st.success("Conexão realizada com sucesso!")
-        st.write("Versão MySQL:", resultado.scalar())
-
-except Exception as e:
-    st.error(f"Erro na conexão: {e}")
-
-
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 APP_DIR = Path(__file__).resolve().parent
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
+from database import engine
 from deck_builder import (
     MAX_DECK_SIZE,
     Card,
@@ -33,6 +16,12 @@ from deck_builder import (
     export_deck_csv,
     load_catalog,
     parse_deck_csv,
+)
+from deck_catalog import (
+    ensure_deck_catalog,
+    list_saved_decks,
+    save_deck,
+    update_saved_deck,
 )
 
 
@@ -52,6 +41,13 @@ try:
     catalog = get_catalog()
 except (OSError, ValueError) as error:
     st.error(f"Não foi possível carregar o catálogo: {error}")
+    st.stop()
+
+try:
+    ensure_deck_catalog(engine)
+    saved_decks = list_saved_decks(engine)
+except (SQLAlchemyError, ValueError) as error:
+    st.error(f"Não foi possível acessar o catálogo de decks no servidor: {error}")
     st.stop()
 
 if "deck" not in st.session_state:
@@ -204,6 +200,87 @@ with deck_column:
         mime="text/csv",
         disabled=not st.session_state.deck,
     )
+
+    st.divider()
+    with st.expander("Catálogo de decks salvos"):
+        if saved_decks:
+            saved_decks_by_name = {saved_deck.name: saved_deck for saved_deck in saved_decks}
+            selected_saved_name = st.selectbox(
+                "Deck salvo",
+                list(saved_decks_by_name),
+                key="selected_saved_deck_name",
+            )
+            selected_saved_deck = saved_decks_by_name[selected_saved_name]
+            saved_deck_is_available = all(
+                name in cards_by_name for name in selected_saved_deck.cards
+            )
+            st.caption(
+                f"Criado em {selected_saved_deck.created_at:%d/%m/%Y %H:%M} · "
+                f"{deck_size(selected_saved_deck.cards)} cartas"
+            )
+            if not saved_deck_is_available:
+                st.error(
+                    "Este deck contém cartas que não existem mais no catálogo atual."
+                )
+            else:
+                st.download_button(
+                    "Baixar CSV do deck salvo",
+                    data=export_deck_csv(selected_saved_deck.cards, catalog),
+                    file_name=f"{selected_saved_deck.name}.csv",
+                    mime="text/csv",
+                    key=f"download_saved_deck_{selected_saved_deck.id}",
+                )
+            if st.button(
+                "Carregar para editar",
+                key="load_saved_deck",
+                disabled=not saved_deck_is_available,
+            ):
+                st.session_state.deck = selected_saved_deck.cards.copy()
+                st.session_state.editing_saved_deck_id = selected_saved_deck.id
+                st.session_state.editing_saved_deck_name = selected_saved_deck.name
+                st.session_state.pop("test_hand", None)
+                st.rerun()
+        else:
+            st.info("Ainda não há decks salvos no catálogo.")
+
+        deck_name = st.text_input("Nome para salvar como novo deck", max_chars=100)
+        if st.button(
+            "Salvar no catálogo",
+            disabled=total_cards != MAX_DECK_SIZE,
+            key="save_deck_to_catalog",
+        ):
+            try:
+                save_deck(engine, deck_name, st.session_state.deck)
+            except ValueError as error:
+                st.error(f"Não foi possível salvar o deck: {error}")
+            except IntegrityError:
+                st.error("Já existe um deck com esse nome no catálogo.")
+            except SQLAlchemyError as error:
+                st.error(f"Falha ao salvar o deck no servidor: {error}")
+            else:
+                st.success(f"Deck '{deck_name.strip()}' salvo no catálogo.")
+                st.rerun()
+        if total_cards != MAX_DECK_SIZE:
+            st.caption(f"Complete {MAX_DECK_SIZE} cartas para salvar o deck.")
+
+        editing_deck_id = st.session_state.get("editing_saved_deck_id")
+        editing_deck_name = st.session_state.get("editing_saved_deck_name")
+        if editing_deck_id is not None:
+            st.caption(f"Editando uma cópia de '{editing_deck_name}'.")
+            if st.button(
+                f"Atualizar deck salvo '{editing_deck_name}'",
+                disabled=total_cards != MAX_DECK_SIZE,
+                key="update_saved_deck",
+            ):
+                try:
+                    update_saved_deck(engine, editing_deck_id, st.session_state.deck)
+                except (ValueError, LookupError) as error:
+                    st.error(f"Não foi possível atualizar o deck: {error}")
+                except SQLAlchemyError as error:
+                    st.error(f"Falha ao atualizar o deck no servidor: {error}")
+                else:
+                    st.success(f"Deck '{editing_deck_name}' atualizado.")
+                    st.rerun()
 
     if st.session_state.deck:
         st.divider()

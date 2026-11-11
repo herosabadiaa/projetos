@@ -30,6 +30,9 @@ O Streamlit exibirá o endereço local da aplicação no terminal.
   ou com as colunas `name,quantity`.
 - Exporte o deck em CSV no formato original do catálogo, sem cabeçalho e com uma
   linha por carta. Assim, cada quantidade aparece como linhas repetidas.
+- Salve decks completos (60 cartas) no catálogo persistido no MySQL configurado
+  no Streamlit Secrets. Decks salvos podem ser carregados para edição, atualizados
+  ou baixados individualmente em CSV.
 
 O arquivo do catálogo contém as colunas `name,hp,atk,mana,image,type,subtype`.
 O caminho das imagens é relativo à raiz do projeto.
@@ -41,7 +44,9 @@ e configure o arquivo principal como `deckbuilder/src/app.py`. Configure a
 instalação de dependências para usar `deckbuilder/requirements.txt`. O projeto
 também inclui `deckbuilder/pyproject.toml` e `deckbuilder/uv.lock` para uso local
 com uv. O catálogo e as imagens continuam sendo lidos de `cards.csv` e
-`resources/` na raiz do repositório.
+`resources/` na raiz do repositório. Configure `database.host`, `database.port`,
+`database.user`, `database.password` e `database.database` nos Streamlit Secrets
+para habilitar o catálogo de decks no servidor.
 
 ## Aplicação
 https://projetos-9beqncb4osygzlurzqrxl9.streamlit.app/

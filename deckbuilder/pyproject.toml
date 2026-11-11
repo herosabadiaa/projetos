@@ -5,6 +5,8 @@ description = "Streamlit deck builder for the card game"
 requires-python = ">=3.10"
 dependencies = [
     "streamlit>=1.40,<2",
+    "sqlalchemy",
+    "pymysql",
 ]
 
 [tool.uv]
