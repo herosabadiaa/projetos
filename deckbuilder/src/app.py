@@ -139,13 +139,25 @@ with catalog_column:
             st.write(f"**HP:** {selected_card.hp} · **ATK:** {selected_card.atk}")
             st.write(f"**Mana:** {selected_card.mana}")
 
+        remaining_capacity = MAX_DECK_SIZE - deck_size(st.session_state.deck)
+        add_quantity = st.number_input(
+            "Quantidade a adicionar",
+            min_value=1,
+            max_value=max(1, remaining_capacity),
+            value=1,
+            step=1,
+            disabled=remaining_capacity == 0,
+            key="add_card_quantity",
+        )
         if st.button(
             "Adicionar ao deck",
             type="primary",
-            disabled=deck_size(st.session_state.deck) >= MAX_DECK_SIZE,
+            disabled=remaining_capacity == 0,
         ):
             deck = st.session_state.deck
-            deck[selected_card.name] = deck.get(selected_card.name, 0) + 1
+            deck[selected_card.name] = (
+                deck.get(selected_card.name, 0) + add_quantity
+            )
             st.session_state.pop("test_hand", None)
             st.rerun()
 
