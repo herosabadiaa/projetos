@@ -1,7 +1,25 @@
 import sys
 from pathlib import Path
+from sqlalchemy import text
+from database import engine
 
 import streamlit as st
+
+
+st.title("Teste de conexão MySQL")
+try:
+    with engine.connect() as conn:
+        resultado = conn.execute(
+            text("SELECT VERSION()")
+        )
+
+        st.success("Conexão realizada com sucesso!")
+        st.write("Versão MySQL:", resultado.scalar())
+
+except Exception as e:
+    st.error(f"Erro na conexão: {e}")
+
+
 
 APP_DIR = Path(__file__).resolve().parent
 if str(APP_DIR) not in sys.path:
