@@ -65,4 +65,4 @@ Após a tabela ser criada, o usuário configurado pela aplicação precisa ter
 permissões de `SELECT`, `INSERT` e `UPDATE` nela.
 
 ## Aplicação
-https://projetos-9beqncb4osygzlurzqrxl9.streamlit.app/
+https://godoyprogtopics.streamlit.app/
