@@ -71,12 +71,19 @@ int main(void){
     int ocupadasInimigos = 0;
     int chargeDraw;
     bool atkHP = false;
+    int final=0;
 
     Posicao campos[MAX_POSITION];
     Posicao camposInimigos[MAX_POSITION];
     criar_posicao(campos, screenWidth, screenHeight, 2.8);
     criar_posicao(camposInimigos, screenWidth, screenHeight, 0.7);
 
+    Posicao habitat;
+    habitat.area.x = 5;
+    habitat.area.y = screenHeight/2;
+    habitat.area.width = 288;
+    habitat.area.height =192;
+    habitat.vazia = true;
 
     Deck cemiterio; //Estrutura do cemiterio
     cemiterio = (Deck){0};
@@ -109,314 +116,357 @@ int main(void){
                     }
                 break;
             case JOGANDO:
-                switch (turnState) {
-                    case TURNO_JOGADOR:
-                        if (arrasto.id != 0){ //Altera a posicao de uma carta que esta sendo arrastada
-                            arrasto.cordenada = (Vector2){mousePosition.x-20, mousePosition.y-30};
-                        }
-                        //--LMB--
-                        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
-                            if(deck.quant_puxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
-                                if (CheckCollisionPointRec(GetMousePosition(), deck.area) && deck.compradoTurno == false){ //Checa a colisão entre o mouse e deck
-                                    FOR(i, MAX_POSITION){ 
-                                        if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
-                                            Carta disponivel;
-                                            int j;
-                                            FOR(j, MAX_DECK){
-                                                if(deck.cartas[j].id != 0){
-                                                    disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
-                                                    break;
+                if (final==0){
+                    switch (turnState) {
+                        case TURNO_JOGADOR:
+                            if (arrasto.id != 0){ //Altera a posicao de uma carta que esta sendo arrastada
+                                arrasto.cordenada = (Vector2){mousePosition.x-20, mousePosition.y-30};
+                            }
+                            //--LMB--
+                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
+                                if(deck.quant_puxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
+                                    if (CheckCollisionPointRec(GetMousePosition(), deck.area) && deck.compradoTurno == false){ //Checa a colisão entre o mouse e deck
+                                        FOR(i, MAX_POSITION){ 
+                                            if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
+                                                Carta disponivel;
+                                                int j;
+                                                FOR(j, MAX_DECK){
+                                                    if(deck.cartas[j].id != 0){
+                                                        disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
+                                                        break;
+                                                    }
+                                                }
+                                                mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
+                                                deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
+                                                mao[i].vazia = false; //A posicao da mao fica cheia
+                                                deck.quant_puxada += 1;
+                                                deck.compradoTurno = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
+                                    if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
+                                        if(ocupadas == 6){ //Se todas posicoes do meu campo estiverem ocupadas, ao clicar descarto a carta e recupero metade de seu custo
+                                            mana += (int)(mao[i].carregada.cost*0.5); //Adiciona a minha mana metade do custo da carta
+                                            mao[i].vazia = true;                                        
+                                            mao[i].carregada = (Carta){0};
+                                        }else if (mao[i].carregada.lock == false){
+                                            if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
+                                                if (mana >= mao[i].carregada.cost){
+                                                    arrasto = mao[i].carregada;
+                                                    mana -= mao[i].carregada.cost;
+                                                    mao[i].carregada = (Carta){0};
+                                                    mao[i].vazia = true;
                                                 }
                                             }
-                                            mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
-                                            deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
-                                            mao[i].vazia = false; //A posicao da mao fica cheia
-                                            deck.quant_puxada += 1;
-                                            deck.compradoTurno = true;
-                                            break;
                                         }
                                     }
                                 }
-                            }
-                            FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
-                                if (CheckCollisionPointRec(GetMousePosition(), mao[i].area) && alterMao){
-                                    if(ocupadas == 6){ //Se todas posicoes do meu campo estiverem ocupadas, ao clicar descarto a carta e recupero metade de seu custo
-                                        mana += (int)(mao[i].carregada.cost*0.5); //Adiciona a minha mana metade do custo da carta
-                                        mao[i].vazia = true;                                        
-                                        mao[i].carregada = (Carta){0};
-                                    }else if (mao[i].carregada.lock == false){
-                                        if (mao[i].vazia == false && arrasto.id == 0){ //Se a colisao for com uma posicao cheia, a posicao e limpa e a uma flag e ativa
-                                            if (mana >= mao[i].carregada.cost){
-                                                arrasto = mao[i].carregada;
-                                                mana -= mao[i].carregada.cost;
-                                                mao[i].carregada = (Carta){0};
-                                                mao[i].vazia = true;
+                                if(!blockAtack){
+                                    FOR(i, MAX_POSITION){//Serve para atacar, pega a carta sobrevoada no clique
+                                        if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
+                                            if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true && campos[i].carregada.tipo == MONSTER){
+                                                ataco = &campos[i].carregada;
                                             }
                                         }
                                     }
                                 }
-                            }
-                            if(!blockAtack){
-                                FOR(i, MAX_POSITION){//Serve para atacar, pega a carta sobrevoada no clique
-                                    if (CheckCollisionPointRec(GetMousePosition(), campos[i].area)){
-                                        if (campos[i].vazia == false && turnState == TURNO_JOGADOR && atacadoTurno != true && campos[i].carregada.tipo == MONSTER){
-                                            ataco = &campos[i].carregada;
+                                if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
+                                    FOR(i, MAX_POSITION){ 
+                                        if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
+                                            if (camposInimigos[i].vazia == false){
+                                                camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
+                                                ataco = NULL;
+                                                atacadoTurno = true;
+                                            }                                         
+                                        }
+                                    }
+                                    if(atkHP){
+                                        if(CheckCollisionPointRec(GetMousePosition(),life)){
+                                            hpInimigo -= ataco->atk;
+                                            turnState = TURNO_INIMIGO;
                                         }
                                     }
                                 }
-                            }
-                            if (ataco != NULL){ //Verifica se estou no 'modo de ataque'
-                                FOR(i, MAX_POSITION){ 
-                                    if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
-                                        if (camposInimigos[i].vazia == false){
-                                            camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
-                                            ataco = NULL;
-                                            atacadoTurno = true;
-                                        }                                         
-                                    }
-                                }
-                                if(atkHP){
-                                    if(CheckCollisionPointRec(GetMousePosition(),life)){
-                                        hpInimigo -= ataco->atk;
-                                        turnState = TURNO_INIMIGO;
-                                    }
-                                }
-                            }
 
-                            if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
-                                FOR(i, MAX_POSITION){
-                                    if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))){ 
-                                        if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
-                                            campos[i].carregada = arrasto;
-                                            arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
-                                            campos[i].vazia = false; //Preenche a posicao
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if(IsKeyPressed(KEY_S)){ //Ao clicar S ativa o modo shield
-                            bool temShield;
-                            FOR(i, MAX_POSITION){ //Verifica se algumas das cartas em campo esta com shield
-                                if(campos[i].carregada.shield == true){
-                                    temShield = true;
-                                    break;
-                                } else{
-                                    temShield = false;
-                                }
-                            }
-                            if(temShield == false){
-                                shield = true;
-                                charge = false;
-                            }
-                        }
-                        if(shield){
-                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Se o modo shield estiver ativo
-                                FOR(i, MAX_POSITION){ //Ao clicar na carta, o atributo shield se ativa, e vc gasta mana
-                                    if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
-                                        if(mana>=campos[i].carregada.cost+1){
-                                            campos[i].carregada.shield = true; //Ativa o shield
-                                            mana -= (campos[i].carregada.cost+1); //Cobra a mana
-                                            shield = false;
-                                            break;
-                                        }
-                                    } else{ //Ao clicar no nada, vc desativa o modo shield
-                                        shield = false;
-                                    }
-                                }
-                            }
-                        }
-                        if(IsKeyPressed(KEY_D)){ //Ativa o charge
-                            if(!chargeTurno){
-                                charge = true;
-                                shield = false;
-                            }
-                        }
-                        if(charge){
-                            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                                FOR(i, MAX_POSITION){ //Ao clicar em uma carta com o charge, ela ganha um buff de 1.2 no atk por um round
-                                    if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
-                                        if(mana>=campos[i].carregada.cost-1){                                            
-                                            campos[i].carregada.atk *= 1.2;//Altera o atk
-                                            chargeDraw = i;
-                                            if(campos[i].carregada.cost < 2){ //Verifica o custo da carta, para impedir mana negativa
-                                                mana -= (campos[i].carregada.cost);
-                                            }else{
-                                                mana -= (campos[i].carregada.cost-1);
-                                            }
-                                            chargeTurno = true;
-                                            charge = false;
-                                            break;
-                                        }
-                                    } else{
-                                        charge = false;
-                                    }
-                                }
-                            }
-                        }
-
-                    break;
-                    case TURNO_INIMIGO:
-                        //--RMB--
-                        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-                            FOR(i, MAX_POSITION){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
-                                if((CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area) && camposInimigos[i].vazia == false)){
-                                    camposInimigos[i].carregada.hp -= 1000;
-                                }
-                            }       
-                        }
-                        if(!deckInimigo.compradoTurno && deckInimigo.quant_puxada < MAX_DECK){
-                            comprar_carta(maoInimigo, &deckInimigo); 
-                        }   
-                        if(!colocouInimigo){
-                            colocouInimigo = true;
-                            int chance = rand()%10;
-                            int qnt_colocar;
-                            if (chance < 4){
-                                qnt_colocar = 2;
-                            } else{
-                                qnt_colocar = 1;
-                            }
-                            int qnt_mao = 0;
-                            int check = 0;
-                            FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
-                                if(!maoInimigo[i].vazia){
-                                    qnt_mao +=1;
-                                }
-                            }
-                            if(qnt_colocar>qnt_mao){
-                                qnt_colocar = qnt_mao;
-                            }
-                            FOR(i, MAX_POSITION){
-                                if(check < qnt_colocar){
-                                    FOR(j, MAX_POSITION){
-                                        if(!maoInimigo[i].vazia){
-                                            if(camposInimigos[j].vazia){
-                                                camposInimigos[j].carregada = maoInimigo[i].carregada;
-                                                camposInimigos[j].vazia = false;
-                                                check += 1;
-                                                maoInimigo[i].vazia = true;                                        
-                                                maoInimigo[i].carregada = (Carta){0};
+                                if (arrasto.id != 0){ //Se o arrasto estiver ativo, vai checar a colisao do seu mouse com algum campo
+                                    if((CheckCollisionPointRec(GetMousePosition(), habitat.area))&&arrasto.tipo==HABITAT){
+                                        habitat.carregada = arrasto;
+                                        arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
+                                        habitat.vazia = false; //Preenche a posicao
+                                    } 
+                                    FOR(i, MAX_POSITION){
+                                        if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))&&arrasto.tipo!=HABITAT){ 
+                                            if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
+                                                campos[i].carregada = arrasto;
+                                                arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
+                                                campos[i].vazia = false; //Preenche a posicao
                                                 break;
                                             }
                                         }
                                     }
                                 }
                             }
-                        }                        
-                        if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
-                            bool meuOcupado = false;
-                            bool inimigoOcupado = false;
-                            FOR(i, MAX_POSITION) { //Verifica se as posicoes dos campos estao ocupadas
-                                if (campos[i].vazia == false){
-                                    meuOcupado= true;
-                                }
-                                if (camposInimigos[i].vazia == false){
-                                    inimigoOcupado = true;
-                                }
-                            }
-                            if (meuOcupado && inimigoOcupado){ //Se no minimo uma posicao de cada lado estiver ocupada, ele ataca um inimigo aleatorio com uma carta aleatoria
-                                int escolhaMeu;
-                                int escolhaInimigo;
-                                while (true){
-                                    escolhaMeu = rand() %6; //Sorteia uma posicao
-                                    if(campos[escolhaMeu].vazia == false){ //Verifica se a posicao sorteada esta ocupada
+                            if(IsKeyPressed(KEY_S)){ //Ao clicar S ativa o modo shield
+                                bool temShield;
+                                FOR(i, MAX_POSITION){ //Verifica se algumas das cartas em campo esta com shield
+                                    if(campos[i].carregada.shield == true){
+                                        temShield = true;
                                         break;
+                                    } else{
+                                        temShield = false;
                                     }
                                 }
-                                while (true){
-                                    escolhaInimigo = rand() %6; //Sorteia uma posicao
-                                    if(camposInimigos[escolhaInimigo].vazia == false && camposInimigos[escolhaInimigo].carregada.tipo == MONSTER){ //Verifica se a posicao sorteada esta ocupada
-                                        break;
+                                if(temShield == false){
+                                    shield = true;
+                                    charge = false;
+                                }
+                            }
+                            if(shield){
+                                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Se o modo shield estiver ativo
+                                    FOR(i, MAX_POSITION){ //Ao clicar na carta, o atributo shield se ativa, e vc gasta mana
+                                        if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
+                                            if(mana>=campos[i].carregada.cost+1){
+                                                campos[i].carregada.shield = true; //Ativa o shield
+                                                mana -= (campos[i].carregada.cost+1); //Cobra a mana
+                                                shield = false;
+                                                break;
+                                            }
+                                        } else{ //Ao clicar no nada, vc desativa o modo shield
+                                            shield = false;
+                                        }
                                     }
                                 }
-                                if(campos[escolhaMeu].carregada.shield == false){
-                                    campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
-                                }
-                                atacadoTurnoEnemy = true; //Encerra o ataque inimigo
                             }
+                            if(IsKeyPressed(KEY_D)){ //Ativa o charge
+                                if(!chargeTurno){
+                                    charge = true;
+                                    shield = false;
+                                }
+                            }
+                            if(charge){
+                                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                                    FOR(i, MAX_POSITION){ //Ao clicar em uma carta com o charge, ela ganha um buff de 1.2 no atk por um round
+                                        if(CheckCollisionPointRec(GetMousePosition(), campos[i].area)&& campos[i].vazia == false){
+                                            if(mana>=campos[i].carregada.cost-1){                                            
+                                                campos[i].carregada.atk *= 1.2;//Altera o atk
+                                                chargeDraw = i;
+                                                if(campos[i].carregada.cost < 2){ //Verifica o custo da carta, para impedir mana negativa
+                                                    mana -= (campos[i].carregada.cost);
+                                                }else{
+                                                    mana -= (campos[i].carregada.cost-1);
+                                                }
+                                                chargeTurno = true;
+                                                charge = false;
+                                                break;
+                                            }
+                                        } else{
+                                            charge = false;
+                                        }
+                                    }
+                                }
+                            }
+
+                        break;
+                        case TURNO_INIMIGO:
+                            //--RMB--
+                            if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+                                FOR(i, MAX_POSITION){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
+                                    if((CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area) && camposInimigos[i].vazia == false)){
+                                        camposInimigos[i].carregada.hp -= 1000;
+                                    }
+                                }       
+                            }
+                            if(!deckInimigo.compradoTurno && deckInimigo.quant_puxada < MAX_DECK){
+                                comprar_carta(maoInimigo, &deckInimigo); 
+                            }   
+                            if(!colocouInimigo){
+                                colocouInimigo = true;
+                                int chance = rand()%10;
+                                int qnt_colocar;
+                                if (chance < 4){
+                                    qnt_colocar = 2;
+                                } else{
+                                    qnt_colocar = 1;
+                                }
+                                int qnt_mao = 0;
+                                int check = 0;
+                                FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
+                                    if(!maoInimigo[i].vazia){
+                                        qnt_mao +=1;
+                                    }
+                                }
+                                if(qnt_colocar>qnt_mao){
+                                    qnt_colocar = qnt_mao;
+                                }
+                                FOR(i, MAX_POSITION){
+                                    if(check < qnt_colocar){
+                                        FOR(j, MAX_POSITION){
+                                            if(!maoInimigo[i].vazia){
+                                                if(camposInimigos[j].vazia){
+                                                    camposInimigos[j].carregada = maoInimigo[i].carregada;
+                                                    camposInimigos[j].vazia = false;
+                                                    check += 1;
+                                                    maoInimigo[i].vazia = true;                                        
+                                                    maoInimigo[i].carregada = (Carta){0};
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }                        
+                            if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
+                                bool meuOcupado = false;
+                                bool inimigoOcupado = false;
+                                FOR(i, MAX_POSITION) { //Verifica se as posicoes dos campos estao ocupadas
+                                    if (campos[i].vazia == false){
+                                        meuOcupado= true;
+                                    }
+                                    if (camposInimigos[i].vazia == false){
+                                        inimigoOcupado = true;
+                                    }
+                                }
+                                if (meuOcupado && inimigoOcupado){ //Se no minimo uma posicao de cada lado estiver ocupada, ele ataca um inimigo aleatorio com uma carta aleatoria
+                                    int escolhaMeu;
+                                    int escolhaInimigo;
+                                    while (true){
+                                        escolhaMeu = rand() %6; //Sorteia uma posicao
+                                        if(campos[escolhaMeu].vazia == false){ //Verifica se a posicao sorteada esta ocupada
+                                            break;
+                                        }
+                                    }
+                                    while (true){
+                                        escolhaInimigo = rand() %6; //Sorteia uma posicao
+                                        if(camposInimigos[escolhaInimigo].vazia == false && camposInimigos[escolhaInimigo].carregada.tipo == MONSTER){ //Verifica se a posicao sorteada esta ocupada
+                                            break;
+                                        }
+                                    }
+                                    if(campos[escolhaMeu].carregada.shield == false){
+                                        campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
+                                    }
+                                    atacadoTurnoEnemy = true; //Encerra o ataque inimigo
+                                }else if(!meuOcupado && inimigoOcupado){
+                                    int escolhaInimigo = rand() %6; //Sorteia uma posicao
+                                    while (true){
+                                        escolhaInimigo = rand() %6;
+                                        if(camposInimigos[escolhaInimigo].vazia == false && camposInimigos[escolhaInimigo].carregada.tipo == MONSTER){ //Verifica se a posicao sorteada esta ocupada
+                                            break;
+                                        }
+                                    }
+                                    hp -= camposInimigos[escolhaInimigo].carregada.atk;
+                                    atacadoTurnoEnemy = true; 
+
+                                }
+
+                            }
+
+                        break;
+                    }
+                    //--------------------------------------------------------------------------
+                    // Global features    
+                    //--------------------------------------------------------------------------
+                    ocupadas = 0;
+                    ocupadasInimigos = 0;    
+                    FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
+                        if(!campos[i].vazia){
+                            ocupadas +=1;
                         }
-
-                    break;
-                }
-                //--------------------------------------------------------------------------
-                // Global features    
-                //--------------------------------------------------------------------------
-                ocupadas = 0;
-                ocupadasInimigos = 0;    
-                FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
-                    if(!campos[i].vazia){
-                        ocupadas +=1;
+                        if(!camposInimigos[i].vazia){
+                            ocupadasInimigos +=1;
+                        }
                     }
-                    if(!camposInimigos[i].vazia){
-                        ocupadasInimigos +=1;
+
+                    atkHP=false;
+                    if(blockAtack == false && ocupadasInimigos == 0 && atacadoTurno == false){
+                        atkHP = true;
                     }
-                }
 
-                atkHP=false;
-                if(blockAtack == false && ocupadasInimigos == 0 && atacadoTurno == false){
-                    atkHP = true;
-                }
-
-                //--LMB--
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Alterna entre os turnos ao clicar no botao de alterar turno
-                    if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
-                        if(turnState == TURNO_JOGADOR){
-                            turnState = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
-                            ataco = NULL;
-                            atacadoTurnoEnemy = false;
-                            if(blockAtack){
-                                blockAtack = false;
-                            }
-                        } else {
-                            turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
-                            colocouInimigo = false;
-                            deck.compradoTurno = false;  //Me permite comprar outra carta
-                            deckInimigo.compradoTurno = false;
-                            atacadoTurno = false;
-                            chargeTurno = false;
-                            if(mana < MAX_MANA){ //Adiciona mana ao final do round
-                                mana +=1;
-                            }
-                            FOR(i, MAX_POSITION){
-                                if(mao[i].vazia == false){
-                                    mao[i].carregada.lock = false; //Tira o lock das cartas
+                    //--LMB--
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Alterna entre os turnos ao clicar no botao de alterar turno
+                        if((CheckCollisionPointRec(GetMousePosition(), alterTurno))){
+                            int buff = 0;
+                            if(habitat.vazia==false){
+                                buff = habitat.carregada.atk;
+                                FOR(k,MAX_POSITION){
+                                   if(campos[k].carregada.subTipo == habitat.carregada.subTipo){
+                                    campos[k].carregada.atk += buff;
+                                   }
                                 }
-                                if(campos[i].carregada.shield == true){ //Remove o shield 
-                                    campos[i].carregada.shield = false;
+                            }
+                            if(turnState == TURNO_JOGADOR){
+                                turnState = TURNO_INIMIGO; //Finalizo meu turno, e passo para o inimigo
+                                ataco = NULL;
+                                atacadoTurnoEnemy = false;
+                                if(blockAtack){
+                                    blockAtack = false;
                                 }
-                                FOR(j, MAX_CATALOGO){ //Remove o buff do charge, comparando a carta atual com a do catalogo
-                                    if(strcmp(campos[i].carregada.nome,catalogo[j].nome) == 0){
-                                        campos[i].carregada.atk = catalogo[j].atk;
-                                        break;
+                            } else {
+                                turnState = TURNO_JOGADOR; //Inimigo finaliza o turno
+                                colocouInimigo = false;
+                                deck.compradoTurno = false;  //Me permite comprar outra carta
+                                deckInimigo.compradoTurno = false;
+                                atacadoTurno = false;
+                                chargeTurno = false;
+                                if(mana < MAX_MANA){ //Adiciona mana ao final do round
+                                    mana +=1;
+                                }
+                                FOR(i, MAX_POSITION){
+                                    if(mao[i].vazia == false){
+                                        mao[i].carregada.lock = false; //Tira o lock das cartas
+                                    }
+                                    if(campos[i].carregada.shield == true){ //Remove o shield 
+                                        campos[i].carregada.shield = false;
+                                    }
+                                    FOR(j, MAX_CATALOGO){ //Remove o buff do charge, comparando a carta atual com a do catalogo
+                                        if(strcmp(campos[i].carregada.nome,catalogo[j].nome) == 0){
+                                            campos[i].carregada.atk = catalogo[j].atk;
+                                            break;
+                                        }
                                     }
                                 }
                             }
-                        }    
+                            FOR(k,MAX_POSITION){
+                                if(campos[k].carregada.subTipo == habitat.carregada.subTipo){
+                                    campos[k].carregada.atk -= buff;
+                                }
+                            }    
+                        }
+                    }    
+                    //--Q--
+                    if(IsKeyPressed(KEY_Q)){
+                        alterMao = (!alterMao);     
                     }
-                }    
-                //--Q--
-                if(IsKeyPressed(KEY_Q)){ //Altera a visibilidade da mao
-                    alterMao = (!alterMao);     
+                    if(IsKeyPressed(KEY_O)){
+                        hp-=2000;
+                    }
+                    if(IsKeyPressed(KEY_P)){
+                        hpInimigo-=2000;
+                    }
+                    //Cards Updates
+                    FOR(i, MAX_POSITION){
+                        if ((campos[i].carregada.hp <= 0 && campos[i].carregada.tipo==MONSTER)&& campos[i].vazia == false){
+                            cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
+                            campos[i].carregada = (Carta){0}; //A posicao dela e limpa
+                            campos[i].vazia = true; //A posicao e definida como vazia
+                            quantMorta += 1;
+                            break;
+                        }
+                        if ((camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].carregada.tipo == MONSTER)&& camposInimigos[i].vazia == false){
+                            camposInimigos[i].carregada = (Carta){0};
+                            camposInimigos[i].vazia = true;
+                            mana += 2;
+                            break;
+                        }
+                    }
+                    if(hp <= 0){
+                        final = 1;
+                    }else if(hpInimigo<=0){
+                        final = 2;
+                    }
                 }
-
-                //Cards Updates
-                FOR(i, MAX_POSITION){
-                    if ((campos[i].carregada.hp <= 0 && campos[i].carregada.tipo==MONSTER)&& campos[i].vazia == false){
-                        cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
-                        campos[i].carregada = (Carta){0}; //A posicao dela e limpa
-                        campos[i].vazia = true; //A posicao e definida como vazia
-                        quantMorta += 1;
-                        break;
-                    }
-                    if ((camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].carregada.tipo == MONSTER)&& camposInimigos[i].vazia == false){
-                        camposInimigos[i].carregada = (Carta){0};
-                        camposInimigos[i].vazia = true;
-                        mana += 2;
-                        break;
-                    }
-                }  
             break;    
         }   
     
@@ -527,6 +577,14 @@ int main(void){
                             DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){255, 255, 0, 80});
                         }
                     }
+                    if (habitat.vazia) {
+                            DrawRectangleRounded(habitat.area, 0.12f, 6, (Color){25, 35, 48, 160});
+                            DrawRectangleRoundedLines(habitat.area, 0.12f, 6, (Color){60, 100, 160, 100});
+                        } else {
+                            DrawRectangleRounded(habitat.area, 0.12f, 6, (Color){40, 80, 140, 255});
+                            DrawTexturePro(habitat.carregada.textura, (Rectangle){0, 0, habitat.carregada.textura.width, habitat.carregada.textura.height}, (Rectangle){habitat.area.x + 144.0f, habitat.area.y + 96.0f, 192.0f, 288.0f},(Vector2){96.0f, 144.0f}, 270.0f, WHITE);
+                            DrawRectangleRoundedLines(habitat.area, 0.12f, 6, (Color){100, 180, 255, 220});
+                    }
 
                     //Mao
                     if (alterMao) {
@@ -618,6 +676,14 @@ int main(void){
                     if(chargeTurno == true){
                         DrawRectangle(campos[chargeDraw].area.x, campos[chargeDraw].area.y, campos[chargeDraw].area.width, campos[chargeDraw].area.height, (Color){0, 0, 255, 120});
                     }
+                    if(final == 2){
+                        DrawRectangle(0,0, 1920, 1080, (Color){255, 255, 0, 200});
+                        DrawText("YOU WIN", (screenWidth / 2) - (MeasureText("YOU WIN", 148) / 2), 110, 148, (Color){255, 255, 255, 255});
+                    }else if(final==1){
+                        DrawText("YOU LOSE", (screenWidth / 2) - (MeasureText("YOU LOSE", 148) / 2), 110, 148, (Color){255, 255, 255, 255});
+                        DrawRectangle(0,0, 1920, 1080, (Color){255, 0, 0, 200});
+                    }
+
                 break;    
             }
         EndDrawing();
