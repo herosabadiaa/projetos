@@ -26,7 +26,8 @@
 typedef enum TipoCarta {
     MONSTER,
     SPELL,
-    TRAP
+    TRAP,
+    HABITAT
 } TipoCarta;
 
 typedef enum SpellCarta {
