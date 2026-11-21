@@ -9,6 +9,7 @@
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
+#include "raymath.h"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -100,6 +101,9 @@ int main(void){
 
     preencher_mao(mao, &deck);
     preencher_mao(maoInimigo, &deckInimigo);
+    FOR(i, MAX_POSITION){ //As cartas iniciais ja comecam na posicao da mao (sem animacao)
+        mao[i].carregada.cordenada = (Vector2){mao[i].area.x, mao[i].area.y};
+    }
 
     while(!WindowShouldClose() && !fecharJogo){
         Vector2 mousePosition = GetMousePosition(); //Pega a posicao do mouse
@@ -137,6 +141,7 @@ int main(void){
                                                     }
                                                 }
                                                 mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
+                                                mao[i].carregada.cordenada = (Vector2){deck.area.x, deck.area.y}; //A carta comeca no deck e desliza ate a mao
                                                 deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
                                                 mao[i].vazia = false; //A posicao da mao fica cheia
                                                 deck.quant_puxada += 1;
@@ -178,6 +183,7 @@ int main(void){
                                         if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){//Checa a colisao com uma posicao inimiga ocupada
                                             if (camposInimigos[i].vazia == false){
                                                 camposInimigos[i].carregada.hp -= ataco->atk; //Diminui a vida da carta inimiga
+                                                camposInimigos[i].carregada.cordenada.y = 1; //Inicia as faiscas de impacto
                                                 ataco = NULL;
                                                 atacadoTurno = true;
                                             }                                         
@@ -201,6 +207,7 @@ int main(void){
                                         if((CheckCollisionPointRec(GetMousePosition(), campos[i].area))&&arrasto.tipo!=HABITAT){ 
                                             if(campos[i].vazia == true){ //Se o campo estiver vazio, atribui a carta do arrasto a ele
                                                 campos[i].carregada = arrasto;
+                                                campos[i].carregada.cordenada = (Vector2){0, -1}; //No campo, a cordenada.x conta a animacao de morte e o y negativo inicia a shockwave
                                                 arrasto = (Carta){0}; //Limpa o arrasto, deixando o 0/Falso
                                                 campos[i].vazia = false; //Preenche a posicao
                                                 break;
@@ -276,6 +283,7 @@ int main(void){
                                 FOR(i, MAX_POSITION){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
                                     if((CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area) && camposInimigos[i].vazia == false)){
                                         camposInimigos[i].carregada.hp -= 1000;
+                                        camposInimigos[i].carregada.cordenada.y = 1; //Inicia as faiscas de impacto
                                     }
                                 }       
                             }
@@ -307,6 +315,7 @@ int main(void){
                                             if(!maoInimigo[i].vazia){
                                                 if(camposInimigos[j].vazia){
                                                     camposInimigos[j].carregada = maoInimigo[i].carregada;
+                                                    camposInimigos[j].carregada.cordenada = (Vector2){0, 0}; //No campo, a cordenada.x conta a animacao de morte
                                                     camposInimigos[j].vazia = false;
                                                     check += 1;
                                                     maoInimigo[i].vazia = true;                                        
@@ -346,6 +355,7 @@ int main(void){
                                     }
                                     if(campos[escolhaMeu].carregada.shield == false){
                                         campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
+                                        campos[escolhaMeu].carregada.cordenada.y = 1; //Inicia as faiscas de impacto
                                     }
                                     atacadoTurnoEnemy = true; //Encerra o ataque inimigo
                                 }else if(!meuOcupado && inimigoOcupado){
@@ -445,20 +455,53 @@ int main(void){
                     if(IsKeyPressed(KEY_P)){
                         hpInimigo-=2000;
                     }
+                    FOR(i, MAX_POSITION){ //Desliza as cartas da mao ate a sua posicao (animacao de compra)
+                        if(!mao[i].vazia){
+                            mao[i].carregada.cordenada = Vector2Lerp(mao[i].carregada.cordenada, (Vector2){mao[i].area.x, mao[i].area.y}, 0.2f);
+                        }
+                    }
+
+                    FOR(i, MAX_POSITION){ //Avanca as faiscas de impacto (cordenada.y conta ate 15 frames e volta a 0)
+                        if(campos[i].carregada.cordenada.y > 0){
+                            campos[i].carregada.cordenada.y += 1;
+                            if(campos[i].carregada.cordenada.y > 15){
+                                campos[i].carregada.cordenada.y = 0;
+                            }
+                        }
+                        if(campos[i].carregada.cordenada.y < 0){ //Avanca a shockwave de colocar a carta (cordenada.y negativo conta ate -15 e volta a 0)
+                            campos[i].carregada.cordenada.y -= 1;
+                            if(campos[i].carregada.cordenada.y < -15){
+                                campos[i].carregada.cordenada.y = 0;
+                            }
+                        }
+                        if(camposInimigos[i].carregada.cordenada.y > 0){
+                            camposInimigos[i].carregada.cordenada.y += 1;
+                            if(camposInimigos[i].carregada.cordenada.y > 15){
+                                camposInimigos[i].carregada.cordenada.y = 0;
+                            }
+                        }
+                    }
+
                     //Cards Updates
                     FOR(i, MAX_POSITION){
                         if ((campos[i].carregada.hp <= 0 && campos[i].carregada.tipo==MONSTER)&& campos[i].vazia == false){
-                            cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
-                            campos[i].carregada = (Carta){0}; //A posicao dela e limpa
-                            campos[i].vazia = true; //A posicao e definida como vazia
-                            quantMorta += 1;
-                            break;
+                            campos[i].carregada.cordenada.x += 1; //Conta os frames da animacao de morte (fade-out)
+                            if (campos[i].carregada.cordenada.x >= 20){ //Ao fim da animacao a carta e removida
+                                cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
+                                campos[i].carregada = (Carta){0}; //A posicao dela e limpa
+                                campos[i].vazia = true; //A posicao e definida como vazia
+                                quantMorta += 1;
+                                break;
+                            }
                         }
                         if ((camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].carregada.tipo == MONSTER)&& camposInimigos[i].vazia == false){
-                            camposInimigos[i].carregada = (Carta){0};
-                            camposInimigos[i].vazia = true;
-                            mana += 2;
-                            break;
+                            camposInimigos[i].carregada.cordenada.x += 1; //Conta os frames da animacao de morte (fade-out)
+                            if (camposInimigos[i].carregada.cordenada.x >= 20){ //Ao fim da animacao a carta e removida
+                                camposInimigos[i].carregada = (Carta){0};
+                                camposInimigos[i].vazia = true;
+                                mana += 2;
+                                break;
+                            }
                         }
                     }
                     if(hp <= 0){
@@ -466,6 +509,9 @@ int main(void){
                     }else if(hpInimigo<=0){
                         final = 2;
                     }
+                }
+                if(final != 0){ //Depois que o jogo termina, final conta os frames (usado nas animacoes de vitoria e derrota)
+                    final += 1;
                 }
             break;    
         }   
@@ -560,18 +606,18 @@ int main(void){
                             DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){25, 35, 48, 160});
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
                         } else {
-                            DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){40, 80, 140, 255});
-                            DrawTexturePro(campos[i].carregada.textura, (Rectangle){0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height}, (Rectangle){campos[i].area.x, campos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, WHITE);
-                            DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
+                            DrawRectangleRounded(campos[i].area, 0.12f, 6, Fade((Color){40, 80, 140, 255}, 1.0f - campos[i].carregada.cordenada.x/20)); //O Fade faz a carta sumir conforme a animacao de morte
+                            DrawTexturePro(campos[i].carregada.textura, (Rectangle){0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height}, (Rectangle){campos[i].area.x, campos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, Fade(WHITE, 1.0f - campos[i].carregada.cordenada.x/20));
+                            DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, Fade((Color){100, 180, 255, 220}, 1.0f - campos[i].carregada.cordenada.x/20));
                         }
 
                         if (camposInimigos[i].vazia) {
                             DrawRectangleRounded(camposInimigos[i].area, 0.12f, 6, (Color){25, 35, 48, 160});
                             DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
                         } else {
-                            DrawRectangleRounded(camposInimigos[i].area, 0.12f, 6, (Color){40, 80, 140, 255});
-                            DrawTexturePro(camposInimigos[i].carregada.textura, (Rectangle){0, 0, camposInimigos[i].carregada.textura.width, camposInimigos[i].carregada.textura.height}, (Rectangle){camposInimigos[i].area.x, camposInimigos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, WHITE);
-                            DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, (Color){100, 180, 255, 220});
+                            DrawRectangleRounded(camposInimigos[i].area, 0.12f, 6, Fade((Color){40, 80, 140, 255}, 1.0f - camposInimigos[i].carregada.cordenada.x/20));
+                            DrawTexturePro(camposInimigos[i].carregada.textura, (Rectangle){0, 0, camposInimigos[i].carregada.textura.width, camposInimigos[i].carregada.textura.height}, (Rectangle){camposInimigos[i].area.x, camposInimigos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, Fade(WHITE, 1.0f - camposInimigos[i].carregada.cordenada.x/20));
+                            DrawRectangleRoundedLines(camposInimigos[i].area, 0.12f, 6, Fade((Color){100, 180, 255, 220}, 1.0f - camposInimigos[i].carregada.cordenada.x/20));
                         }
                         if(campos[i].carregada.shield == true){
                             DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){255, 255, 0, 80});
@@ -586,13 +632,32 @@ int main(void){
                             DrawRectangleRoundedLines(habitat.area, 0.12f, 6, (Color){100, 180, 255, 220});
                     }
 
+                    //Faiscas de impacto (saem do centro da carta atingida e somem conforme o contador)
+                    FOR(i, MAX_POSITION) {
+                        if (campos[i].carregada.cordenada.y > 0) {
+                            FOR(k, 8) {
+                                DrawLineEx((Vector2){campos[i].area.x + 96 + cosf(k*PI/4)*(20 + campos[i].carregada.cordenada.y*6), campos[i].area.y + 144 + sinf(k*PI/4)*(20 + campos[i].carregada.cordenada.y*6)}, (Vector2){campos[i].area.x + 96 + cosf(k*PI/4)*(40 + campos[i].carregada.cordenada.y*8), campos[i].area.y + 144 + sinf(k*PI/4)*(40 + campos[i].carregada.cordenada.y*8)}, 4.0f, Fade(k%2 ? YELLOW : ORANGE, 1.0f - campos[i].carregada.cordenada.y/15));
+                            }
+                            DrawCircle(campos[i].area.x + 96, campos[i].area.y + 144, 60 - campos[i].carregada.cordenada.y*3, Fade(WHITE, 0.5f - campos[i].carregada.cordenada.y/30));
+                        }
+                        if (campos[i].carregada.cordenada.y < 0) { //Shockwave ao colocar a carta: um anel que cresce em volta dela e some
+                            DrawRectangleRoundedLinesEx((Rectangle){campos[i].area.x + campos[i].carregada.cordenada.y*3, campos[i].area.y + campos[i].carregada.cordenada.y*3, campos[i].area.width - campos[i].carregada.cordenada.y*6, campos[i].area.height - campos[i].carregada.cordenada.y*6}, 0.12f, 6, 4.0f, Fade(WHITE, 1.0f + campos[i].carregada.cordenada.y/15));
+                        }
+                        if (camposInimigos[i].carregada.cordenada.y > 0) {
+                            FOR(k, 8) {
+                                DrawLineEx((Vector2){camposInimigos[i].area.x + 96 + cosf(k*PI/4)*(20 + camposInimigos[i].carregada.cordenada.y*6), camposInimigos[i].area.y + 144 + sinf(k*PI/4)*(20 + camposInimigos[i].carregada.cordenada.y*6)}, (Vector2){camposInimigos[i].area.x + 96 + cosf(k*PI/4)*(40 + camposInimigos[i].carregada.cordenada.y*8), camposInimigos[i].area.y + 144 + sinf(k*PI/4)*(40 + camposInimigos[i].carregada.cordenada.y*8)}, 4.0f, Fade(k%2 ? YELLOW : ORANGE, 1.0f - camposInimigos[i].carregada.cordenada.y/15));
+                            }
+                            DrawCircle(camposInimigos[i].area.x + 96, camposInimigos[i].area.y + 144, 60 - camposInimigos[i].carregada.cordenada.y*3, Fade(WHITE, 0.5f - camposInimigos[i].carregada.cordenada.y/30));
+                        }
+                    }
+
                     //Mao
                     if (alterMao) {
                         FOR(i, MAX_POSITION) {
                             DrawRectangleRounded(mao[i].area, 0.12f, 6, (Color){20, 28, 40, 180});
                             DrawRectangleRoundedLines(mao[i].area, 0.12f, 6, (Color){140, 180, 240, 100});
                             if (!mao[i].vazia) {
-                                DrawTexturePro(mao[i].carregada.textura, (Rectangle){0, 0, mao[i].carregada.textura.width, mao[i].carregada.textura.height}, (Rectangle){mao[i].area.x, mao[i].area.y, 96.0f, 144.0f}, (Vector2){0, 0}, 0.0f, WHITE);                            }
+                                DrawTexturePro(mao[i].carregada.textura, (Rectangle){0, 0, mao[i].carregada.textura.width, mao[i].carregada.textura.height}, (Rectangle){mao[i].carregada.cordenada.x, mao[i].carregada.cordenada.y, 96.0f, 144.0f}, (Vector2){0, 0}, 0.0f, WHITE);                            }
                         }
                     }
 
@@ -676,12 +741,39 @@ int main(void){
                     if(chargeTurno == true){
                         DrawRectangle(campos[chargeDraw].area.x, campos[chargeDraw].area.y, campos[chargeDraw].area.width, campos[chargeDraw].area.height, (Color){0, 0, 255, 120});
                     }
-                    if(final == 2){
-                        DrawRectangle(0,0, 1920, 1080, (Color){255, 255, 0, 200});
-                        DrawText("YOU WIN", (screenWidth / 2) - (MeasureText("YOU WIN", 148) / 2), 110, 148, (Color){255, 255, 255, 255});
-                    }else if(final==1){
-                        DrawText("YOU LOSE", (screenWidth / 2) - (MeasureText("YOU LOSE", 148) / 2), 110, 148, (Color){255, 255, 255, 255});
-                        DrawRectangle(0,0, 1920, 1080, (Color){255, 0, 0, 200});
+                    if(final > 0 && hp > 0){ //Vitoria: a tela vai ficando dourada, confete cai e o texto desce (final conta os frames desde o fim do jogo)
+                        if(final < 30){
+                            DrawRectangle(0, 0, screenWidth, screenHeight, (Color){255, 220, 0, final*6}); //O fundo aparece aos poucos
+                        }else{
+                            DrawRectangle(0, 0, screenWidth, screenHeight, (Color){255, 220, 0, 180});
+                        }
+                        DrawCircleLines(screenWidth/2, screenHeight/2, final*10, WHITE); //Aneis que crescem a partir do centro
+                        DrawCircleLines(screenWidth/2, screenHeight/2, final*6, WHITE);
+                        FOR(k, 30){ //Confete caindo
+                            DrawRectangle(k*64, (final*3 + k*70) % screenHeight, 12, 12, RED);
+                            DrawRectangle(k*64 + 32, (final*5 + k*90) % screenHeight, 12, 12, BLUE);
+                        }
+                        if(final < 20){
+                            DrawText("YOU WIN", (screenWidth / 2) - (MeasureText("YOU WIN", 148) / 2), final*5, 148, WHITE); //O texto desce ate o lugar
+                        }else{
+                            DrawText("YOU WIN", (screenWidth / 2) - (MeasureText("YOU WIN", 148) / 2), 100, 148, WHITE);
+                        }
+                    }else if(final > 0){ //Derrota: a tela vai ficando vermelha, chove e o texto desce tremendo
+                        if(final < 30){
+                            DrawRectangle(0, 0, screenWidth, screenHeight, (Color){255, 0, 0, final*6}); //O fundo aparece aos poucos
+                        }else{
+                            DrawRectangle(0, 0, screenWidth, screenHeight, (Color){255, 0, 0, 180});
+                        }
+                        FOR(k, 40){ //Chuva caindo
+                            DrawRectangle(k*48, (final*12 + k*53) % screenHeight, 3, 20, LIGHTGRAY);
+                        }
+                        if(final < 20){
+                            DrawText("YOU LOSE", (screenWidth / 2) - (MeasureText("YOU LOSE", 148) / 2), final*5, 148, WHITE); //O texto desce ate o lugar
+                        }else if(final < 60){
+                            DrawText("YOU LOSE", (screenWidth / 2) - (MeasureText("YOU LOSE", 148) / 2) + GetRandomValue(-8, 8), 100, 148, WHITE); //Treme ao chegar
+                        }else{
+                            DrawText("YOU LOSE", (screenWidth / 2) - (MeasureText("YOU LOSE", 148) / 2), 100, 148, WHITE);
+                        }
                     }
 
                 break;    
