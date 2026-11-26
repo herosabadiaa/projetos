@@ -70,6 +70,7 @@ Deck carregar_deck(Texture2D texturasCarregadas[MAX_CATALOGO], CartaCSV catalogo
         deck.cartas[i].atk = catalogo[escolhido].atk;
         deck.cartas[i].cost = catalogo[escolhido].mana;
         deck.cartas[i].tipo = catalogo[escolhido].tipo;
+        deck.cartas[i].subTipo = catalogo[escolhido].subTipo;
         deck.cartas[i].textura = texturasCarregadas[escolhido];
         deck.cartas[i].id = i + 1;
         deck.cartas[i].lock = true; //Impede jogar a carta no mesmo turno da compra
