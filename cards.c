@@ -34,7 +34,15 @@ int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]) {
         pedaco = strtok(NULL, ",");
         strncpy(catalogo[cartaCarregando].caminhoTextura, pedaco, sizeof(catalogo[cartaCarregando].caminhoTextura) - 1);
         pedaco = strtok(NULL, ",");
-        catalogo[cartaCarregando].tipo = (TipoCarta)atoi(pedaco);
+        if(strcmp(pedaco, "HABITAT") == 0){
+        catalogo[cartaCarregando].tipo = HABITAT;
+        }else if(strcmp(pedaco, "SPELL") == 0){
+            catalogo[cartaCarregando].tipo = SPELL;
+        }else if(strcmp(pedaco, "TRAP") == 0){
+            catalogo[cartaCarregando].tipo = TRAP;
+        }else{
+            catalogo[cartaCarregando].tipo = MONSTER;
+        }
         cartaCarregando++;
     }
     fclose(arquivo);
@@ -123,6 +131,7 @@ void comprar_carta(Posicao mao[MAX_POSITION], Deck *deck){
                 }
             }
             mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
+            mao[i].carregada.cordenada = (Vector2){deck->area.x, deck->area.y};
             deck->cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
             mao[i].vazia = false; //A posicao da mao fica cheia
             deck->quant_puxada += 1;
