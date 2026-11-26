@@ -117,6 +117,7 @@ typedef struct CartaCSV{ //Estrutura para catalogo
     int mana;
     char caminhoTextura[128];
     TipoCarta tipo;
+    SubCarta subTipo;
 } CartaCSV;
 
 typedef struct Node {
