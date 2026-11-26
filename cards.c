@@ -43,6 +43,8 @@ int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]) {
         }else{
             catalogo[cartaCarregando].tipo = MONSTER;
         }
+        pedaco = strtok(NULL, ",");
+        catalogo[cartaCarregando].subTipo = atoi(pedaco);
         cartaCarregando++;
     }
     fclose(arquivo);
