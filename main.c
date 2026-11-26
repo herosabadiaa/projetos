@@ -75,6 +75,8 @@ int main(void){
     int chargeDraw;
     bool atkHP = false;
     int final=0;
+    int selector = 1;
+
 
     Posicao campos[MAX_POSITION];
     Posicao camposInimigos[MAX_POSITION];
@@ -443,7 +445,40 @@ int main(void){
                                 }
                             }    
                         }
-                    }    
+                    } 
+                    //testes   
+                    if(IsKeyPressed(KEY_M)&& selector <= 157-10){
+                        selector+=10;
+                    }
+                    if(IsKeyPressed(KEY_N)&&selector <157){
+                        selector+=1;
+                    }
+                    if(IsKeyPressed(KEY_B)&& selector >0){
+                            selector-=1;
+                    }
+                    if(IsKeyPressed(KEY_V)&&selector >=0+10){
+                            selector-=10;
+                    }
+                    if(IsKeyPressed(KEY_C)){
+                        FOR(p, MAX_POSITION){
+                            if(mao[p].vazia){
+                                strncpy(mao[p].carregada.nome, catalogo[selector].nome, sizeof(mao[p].carregada.nome) - 1);
+                                mao[p].carregada.atk = catalogo[selector].atk;
+                                mao[p].carregada.id = selector;
+                                mao[p].carregada.hp = catalogo[selector].hp;
+                                mao[p].carregada.tipo = catalogo[selector].tipo;
+                                mao[p].carregada.subTipo = catalogo[selector].subTipo;
+                                mao[p].carregada.textura = texturasCarregadas[selector];
+                                mao[p].carregada.cost = catalogo[selector].mana;
+                                mao[p].carregada.cordenada = (Vector2){mao[p].area.x, mao[p].area.y};
+                                mao[p].carregada.shield = false;
+                                mao[p].carregada.lock = false;
+                                mao[p].vazia = false;
+                                break;
+                            }
+                        }
+                    }
+
                     //--Q--
                     if(IsKeyPressed(KEY_Q)){
                         alterMao = (!alterMao);     
@@ -693,6 +728,11 @@ int main(void){
                             }
                         }
                     }
+                    if (CheckCollisionPointRec(GetMousePosition(), habitat.area)){
+                            if (habitat.vazia == false){
+                                cartaFocada = &habitat.carregada;
+                            }
+                        }
                     FOR(i, MAX_POSITION){
                         if (CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area)){
                             if (camposInimigos[i].vazia == false){
