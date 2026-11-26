@@ -8,6 +8,7 @@
                 "cards.h",
                 "cards.csv",
                 "resources",
+                "audios",
                 "readme.md",
                 "testes",
                 ".gitignore",

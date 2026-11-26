@@ -129,3 +129,29 @@ Spear Dragon,1500,1900,6,resources/spear_dragon.png,MONSTER,DRAGON
 Slifer the Sky Dragon,5000,5000,13,resources/slifer_the_sky_dragon.png,MONSTER,DIVINEBEAST
 Obelisk the Tormentor,4000,4000,12,resources/obelisk_the_tormentor.png,MONSTER,DIVINEBEAST
 The Winged Dragon of Ra,5000,5000,13,resources/the_winged_dragon_of_ra.png,MONSTER,DIVINEBEAST
+Lair of Dragons,140,400,2,resources/no_decal.png,HABITAT,DRAGON
+World of Toons,80,180,2,resources/no_decal.png,HABITAT,TOON
+Tower of Spellcasters,210,160,2,resources/no_decal.png,HABITAT,SPELLCASTER
+Arena of Warriors,180,320,2,resources/no_decal.png,HABITAT,WARRIOR
+Fortress of Beast-Warriors,130,300,2,resources/no_decal.png,HABITAT,BEASTWARRIOR
+Garden of Fairies,230,140,2,resources/no_decal.png,HABITAT,FAIRY
+Abyss of Fiends,160,340,2,resources/no_decal.png,HABITAT,FIEND
+Forest of Beasts,110,280,2,resources/no_decal.png,HABITAT,BEAST
+Cliffs of Winged Beasts,70,260,2,resources/no_decal.png,HABITAT,WINGEDBEAST
+Hive of Insects,50,240,2,resources/no_decal.png,HABITAT,INSECT
+Greenhouse of Plants,400,50,2,resources/no_decal.png,HABITAT,PLANT
+Desert of Reptiles,300,60,2,resources/no_decal.png,HABITAT,REPTILE
+Valley of Dinosaurs,190,220,2,resources/no_decal.png,HABITAT,DINOSAUR
+Reef of Fish,280,40,2,resources/no_decal.png,HABITAT,FISH
+Trench of Sea Serpents,350,20,2,resources/no_decal.png,HABITAT,SEASERPENT
+Lagoon of Aqua,310,70,2,resources/no_decal.png,HABITAT,AQUA
+Volcano of Pyros,120,380,2,resources/no_decal.png,HABITAT,PYRO
+Storm of Thunders,90,360,2,resources/no_decal.png,HABITAT,THUNDER
+Canyon of Rocks,500,0,2,resources/no_decal.png,HABITAT,ROCK
+Factory of Machines,330,80,2,resources/no_decal.png,HABITAT,MACHINE
+Graveyard of Zombies,320,30,2,resources/no_decal.png,HABITAT,ZOMBIE
+Temple of Psychics,250,120,2,resources/no_decal.png,HABITAT,PSYCHIC
+Network of Cyberse,60,460,2,resources/no_decal.png,HABITAT,CYBERSE
+Ruins of Wyrms,150,200,2,resources/no_decal.png,HABITAT,WYRM
+Altar of Divine-Beasts,40,500,2,resources/no_decal.png,HABITAT,DIVINEBEAST
+Labyrinth of Illusions,270,100,2,resources/no_decal.png,HABITAT,ILLUSION

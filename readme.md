@@ -1,3 +1,4 @@
-Caso as imagens não carreguem, converta-as para png:
-https://imagemagick.org/download/#gsc.tab=0
-magick mogrify -format png -define png:format=png *.png
+a fazer:
+-spells e traps
+-algumas habilidades unicas
+-card selector - para testes
