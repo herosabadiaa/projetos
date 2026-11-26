@@ -44,7 +44,10 @@ int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]) {
             catalogo[cartaCarregando].tipo = MONSTER;
         }
         pedaco = strtok(NULL, ",");
-        catalogo[cartaCarregando].subTipo = atoi(pedaco);
+        const char *nomes[] = {"DRAGON","TOON","SPELLCASTER","WARRIOR","BEASTWARRIOR","FAIRY","FIEND","BEAST","WINGEDBEAST","INSECT","PLANT","REPTILE","DINOSAUR","FISH","SEASERPENT","AQUA","PYRO","THUNDER","ROCK","MACHINE","ZOMBIE","PSYCHIC","CYBERSE","WYRM","DIVINEBEAST","ILLUSION"};
+        FOR(s, 26){
+           if(strcmp(pedaco, nomes[s]) == 0) catalogo[cartaCarregando].subTipo = s;
+}
         cartaCarregando++;
     }
     fclose(arquivo);
