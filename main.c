@@ -22,6 +22,7 @@ int main(void){
     const int screenHeight = 1080; //Define a altura da tela
     SetConfigFlags(FLAG_WINDOW_UNDECORATED);
     InitWindow(screenWidth, screenHeight, "a");
+    InitAudioDevice(); 
     SetWindowPosition(0, 0);
     SetTargetFPS(60); //Define o FPS  
     
@@ -63,6 +64,7 @@ int main(void){
     bool shield = false; //Flag para controlar qnd vc ativa o modo shield
     bool fecharJogo = false;
     int mana = MAX_MANA; //Mana max do jogador
+    int manaInimigo = MAX_MANA;
     int hp = 8000;
     int hpInimigo = 8000;
     bool charge = false; //Flag para controlar qnd vc atica o modo charge
@@ -98,14 +100,20 @@ int main(void){
     Rectangle fechar = {screenWidth/2 - 264, screenHeight/2 + 216, 528, 120}; //Cria o botao para fechar o jogo
     Rectangle life = {1180, 48, 244, 54};
 
+    Music ost = LoadMusicStream("audios/ost.mp3");
+    ost.looping = true;
+    SetMusicVolume(ost, 0.067f);
+    PlayMusicStream(ost);
+
 
     preencher_mao(mao, &deck);
     preencher_mao(maoInimigo, &deckInimigo);
-    FOR(i, MAX_POSITION){ //As cartas iniciais ja comecam na posicao da mao (sem animacao)
+    FOR(i, MAX_POSITION){ //As cartas iniciais ja comecam na posicao da mao 
         mao[i].carregada.cordenada = (Vector2){mao[i].area.x, mao[i].area.y};
     }
 
     while(!WindowShouldClose() && !fecharJogo){
+        UpdateMusicStream(ost);
         Vector2 mousePosition = GetMousePosition(); //Pega a posicao do mouse
         switch(gameState){
             case MENU:
@@ -130,25 +138,7 @@ int main(void){
                             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){ //Verifica Click LMB(Left Mouse Button)
                                 if(deck.quant_puxada < MAX_DECK){ //Nao permite que vc puxe mais do que tem
                                     if (CheckCollisionPointRec(GetMousePosition(), deck.area) && deck.compradoTurno == false){ //Checa a colisão entre o mouse e deck
-                                        FOR(i, MAX_POSITION){ 
-                                            if(mao[i].vazia){ //Verifica se uma posicao da mao esta vazia
-                                                Carta disponivel;
-                                                int j;
-                                                FOR(j, MAX_DECK){
-                                                    if(deck.cartas[j].id != 0){
-                                                        disponivel = deck.cartas[j]; //Ve qual carta esta disponivel, ascendente
-                                                        break;
-                                                    }
-                                                }
-                                                mao[i].carregada = disponivel; //Atribui a carta disponivel a minha mao
-                                                mao[i].carregada.cordenada = (Vector2){deck.area.x, deck.area.y}; //A carta comeca no deck e desliza ate a mao
-                                                deck.cartas[j] = (Carta){0}; //A posicao da carta que estava disponivel e zerada
-                                                mao[i].vazia = false; //A posicao da mao fica cheia
-                                                deck.quant_puxada += 1;
-                                                deck.compradoTurno = true;
-                                                break;
-                                            }
-                                        }
+                                            comprar_carta(mao, &deck);
                                     }
                                 }
                                 FOR(i, MAX_POSITION){ //Verfica a colisao do mouse com as posicoes da mao e se a UI esta ativa
@@ -283,7 +273,7 @@ int main(void){
                                 FOR(i, MAX_POSITION){//Ao clicar com o RMB sobre uma posicao q tenha uma carta, faz a carta perder 1000 de vida(Funcao teste)
                                     if((CheckCollisionPointRec(GetMousePosition(), camposInimigos[i].area) && camposInimigos[i].vazia == false)){
                                         camposInimigos[i].carregada.hp -= 1000;
-                                        camposInimigos[i].carregada.cordenada.y = 1; //Inicia as faiscas de impacto
+                                        camposInimigos[i].carregada.cordenada.y = 1; //Inicia as faiscas 
                                     }
                                 }       
                             }
@@ -293,83 +283,89 @@ int main(void){
                             if(!colocouInimigo){
                                 colocouInimigo = true;
                                 int chance = rand()%10;
-                                int qnt_colocar;
-                                if (chance < 4){
+                                int qnt_colocar = 1;
+                                if(chance < 4){
                                     qnt_colocar = 2;
-                                } else{
-                                    qnt_colocar = 1;
                                 }
-                                int qnt_mao = 0;
-                                int check = 0;
-                                FOR(i, MAX_POSITION){ //Verifica qnts posicoes do meu campo estao ocupadas
-                                    if(!maoInimigo[i].vazia){
-                                        qnt_mao +=1;
+                                FOR(n, qnt_colocar){
+                                int escolhaMao = -1;
+                                int melhorNota = -100000000;
+                                FOR(i, 6){ 
+                                    if(maoInimigo[i].vazia == false && maoInimigo[i].carregada.cost <= manaInimigo && maoInimigo[i].carregada.tipo == MONSTER){
+                                        int nota = maoInimigo[i].carregada.atk + maoInimigo[i].carregada.hp/2 - maoInimigo[i].carregada.cost*100; //Calculo da nota carta, feat: Claude
+                                        if(nota > melhorNota){
+                                            melhorNota = nota;
+                                            escolhaMao = i;
+                                        }
                                     }
                                 }
-                                if(qnt_colocar>qnt_mao){
-                                    qnt_colocar = qnt_mao;
+
+                                if(escolhaMao != -1){ 
+                                    FOR(j, 6){
+                                        if(camposInimigos[j].vazia){
+                                            camposInimigos[j].carregada = maoInimigo[escolhaMao].carregada;
+                                            camposInimigos[j].carregada.cordenada = (Vector2){0, 0};
+                                            camposInimigos[j].vazia = false;
+                                            manaInimigo -= camposInimigos[j].carregada.cost;
+                                            maoInimigo[escolhaMao].vazia = true;
+                                            maoInimigo[escolhaMao].carregada = (Carta){0};
+                                            break;
+                                        }
+                                    }
                                 }
-                                FOR(i, MAX_POSITION){
-                                    if(check < qnt_colocar){
-                                        FOR(j, MAX_POSITION){
-                                            if(!maoInimigo[i].vazia){
-                                                if(camposInimigos[j].vazia){
-                                                    camposInimigos[j].carregada = maoInimigo[i].carregada;
-                                                    camposInimigos[j].carregada.cordenada = (Vector2){0, 0}; //No campo, a cordenada.x conta a animacao de morte
-                                                    camposInimigos[j].vazia = false;
-                                                    check += 1;
-                                                    maoInimigo[i].vazia = true;                                        
-                                                    maoInimigo[i].carregada = (Carta){0};
-                                                    break;
+                            }
+                            if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
+                                    int atacante = -1;
+                                    int alvo = -1;
+                                    int melhorNota = -99999;
+                                    int jogadorTemCarta = 0;
+                                    for(int j=0; j<6; j++){
+                                        if(campos[j].vazia == false && campos[j].carregada.hp > 0){
+                                            jogadorTemCarta = 1;
+                                        }
+                                    }
+                                for(int i=0; i<6; i++){
+                                    if(camposInimigos[i].vazia == false && camposInimigos[i].carregada.tipo == MONSTER && camposInimigos[i].carregada.hp > 0){
+                                        int atk = camposInimigos[i].carregada.atk;
+
+                                        if(jogadorTemCarta == 0){
+                                            int nota = atk;
+                                            if(atk >= hp){
+                                                nota += 10000;
+                                            }
+                                            if(nota > melhorNota){
+                                                melhorNota = nota;
+                                                atacante = i;
+                                                alvo = -1;
+                                            }
+                                        } else {
+                                            for(int j=0; j<6; j++){
+                                                if(campos[j].vazia == false && campos[j].carregada.shield == false && campos[j].carregada.hp > 0){
+                                                    int nota = campos[j].carregada.atk;    
+                                                    if(atk >= campos[j].carregada.hp){
+                                                        nota += 1000;
+                                                    }
+                                                    if(nota > melhorNota){
+                                                        melhorNota = nota;
+                                                        atacante = i;
+                                                        alvo = j;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }                        
-                            if (atacadoTurnoEnemy == false){ //Verifica se o inimigo já atacou
-                                bool meuOcupado = false;
-                                bool inimigoOcupado = false;
-                                FOR(i, MAX_POSITION) { //Verifica se as posicoes dos campos estao ocupadas
-                                    if (campos[i].vazia == false){
-                                        meuOcupado= true;
-                                    }
-                                    if (camposInimigos[i].vazia == false){
-                                        inimigoOcupado = true;
-                                    }
-                                }
-                                if (meuOcupado && inimigoOcupado){ //Se no minimo uma posicao de cada lado estiver ocupada, ele ataca um inimigo aleatorio com uma carta aleatoria
-                                    int escolhaMeu;
-                                    int escolhaInimigo;
-                                    while (true){
-                                        escolhaMeu = rand() %6; //Sorteia uma posicao
-                                        if(campos[escolhaMeu].vazia == false){ //Verifica se a posicao sorteada esta ocupada
-                                            break;
-                                        }
-                                    }
-                                    while (true){
-                                        escolhaInimigo = rand() %6; //Sorteia uma posicao
-                                        if(camposInimigos[escolhaInimigo].vazia == false && camposInimigos[escolhaInimigo].carregada.tipo == MONSTER){ //Verifica se a posicao sorteada esta ocupada
-                                            break;
-                                        }
-                                    }
-                                    if(campos[escolhaMeu].carregada.shield == false){
-                                        campos[escolhaMeu].carregada.hp -= camposInimigos[escolhaInimigo].carregada.atk; //Diminui a vida da minha carta
-                                        campos[escolhaMeu].carregada.cordenada.y = 1; //Inicia as faiscas de impacto
-                                    }
-                                    atacadoTurnoEnemy = true; //Encerra o ataque inimigo
-                                }else if(!meuOcupado && inimigoOcupado){
-                                    int escolhaInimigo = rand() %6; //Sorteia uma posicao
-                                    while (true){
-                                        escolhaInimigo = rand() %6;
-                                        if(camposInimigos[escolhaInimigo].vazia == false && camposInimigos[escolhaInimigo].carregada.tipo == MONSTER){ //Verifica se a posicao sorteada esta ocupada
-                                            break;
-                                        }
-                                    }
-                                    hp -= camposInimigos[escolhaInimigo].carregada.atk;
-                                    atacadoTurnoEnemy = true; 
 
+                                if(atacante != -1){
+                                    if(alvo == -1){
+                                        hp -= camposInimigos[atacante].carregada.atk;
+                                    } else {
+                                        campos[alvo].carregada.hp -= camposInimigos[atacante].carregada.atk;
+                                        campos[alvo].carregada.cordenada.y = 1;
+                                    }
                                 }
+                                atacadoTurnoEnemy = true;
+                            }
 
                             }
 
@@ -423,6 +419,9 @@ int main(void){
                                 if(mana < MAX_MANA){ //Adiciona mana ao final do round
                                     mana +=1;
                                 }
+                                if(manaInimigo < MAX_MANA){
+                                    manaInimigo += 1;
+                                }
                                 FOR(i, MAX_POSITION){
                                     if(mao[i].vazia == false){
                                         mao[i].carregada.lock = false; //Tira o lock das cartas
@@ -461,14 +460,14 @@ int main(void){
                         }
                     }
 
-                    FOR(i, MAX_POSITION){ //Avanca as faiscas de impacto (cordenada.y conta ate 15 frames e volta a 0)
+                    FOR(i, MAX_POSITION){ //Avanca as faiscas de impacto 
                         if(campos[i].carregada.cordenada.y > 0){
                             campos[i].carregada.cordenada.y += 1;
                             if(campos[i].carregada.cordenada.y > 15){
                                 campos[i].carregada.cordenada.y = 0;
                             }
                         }
-                        if(campos[i].carregada.cordenada.y < 0){ //Avanca a shockwave de colocar a carta (cordenada.y negativo conta ate -15 e volta a 0)
+                        if(campos[i].carregada.cordenada.y < 0){ //Avanca a shockwave de colocar a carta 
                             campos[i].carregada.cordenada.y -= 1;
                             if(campos[i].carregada.cordenada.y < -15){
                                 campos[i].carregada.cordenada.y = 0;
@@ -485,17 +484,18 @@ int main(void){
                     //Cards Updates
                     FOR(i, MAX_POSITION){
                         if ((campos[i].carregada.hp <= 0 && campos[i].carregada.tipo==MONSTER)&& campos[i].vazia == false){
-                            campos[i].carregada.cordenada.x += 1; //Conta os frames da animacao de morte (fade-out)
-                            if (campos[i].carregada.cordenada.x >= 20){ //Ao fim da animacao a carta e removida
+                            campos[i].carregada.cordenada.x += 1; 
+                            if (campos[i].carregada.cordenada.x >= 20){ 
                                 cemiterio_inserir(&CemiterioEncad, campos[i].carregada); //Carta vai para o cemiterio
                                 campos[i].carregada = (Carta){0}; //A posicao dela e limpa
                                 campos[i].vazia = true; //A posicao e definida como vazia
                                 quantMorta += 1;
+                                manaInimigo += 2;
                                 break;
                             }
                         }
                         if ((camposInimigos[i].carregada.hp <= 0 && camposInimigos[i].carregada.tipo == MONSTER)&& camposInimigos[i].vazia == false){
-                            camposInimigos[i].carregada.cordenada.x += 1; //Conta os frames da animacao de morte (fade-out)
+                            camposInimigos[i].carregada.cordenada.x += 1;
                             if (camposInimigos[i].carregada.cordenada.x >= 20){ //Ao fim da animacao a carta e removida
                                 camposInimigos[i].carregada = (Carta){0};
                                 camposInimigos[i].vazia = true;
@@ -606,7 +606,7 @@ int main(void){
                             DrawRectangleRounded(campos[i].area, 0.12f, 6, (Color){25, 35, 48, 160});
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, (Color){60, 100, 160, 100});
                         } else {
-                            DrawRectangleRounded(campos[i].area, 0.12f, 6, Fade((Color){40, 80, 140, 255}, 1.0f - campos[i].carregada.cordenada.x/20)); //O Fade faz a carta sumir conforme a animacao de morte
+                            DrawRectangleRounded(campos[i].area, 0.12f, 6, Fade((Color){40, 80, 140, 255}, 1.0f - campos[i].carregada.cordenada.x/20)); 
                             DrawTexturePro(campos[i].carregada.textura, (Rectangle){0, 0, campos[i].carregada.textura.width, campos[i].carregada.textura.height}, (Rectangle){campos[i].area.x, campos[i].area.y, 192.0f, 288.0f}, (Vector2){0, 0}, 0.0f, Fade(WHITE, 1.0f - campos[i].carregada.cordenada.x/20));
                             DrawRectangleRoundedLines(campos[i].area, 0.12f, 6, Fade((Color){100, 180, 255, 220}, 1.0f - campos[i].carregada.cordenada.x/20));
                         }
@@ -632,7 +632,6 @@ int main(void){
                             DrawRectangleRoundedLines(habitat.area, 0.12f, 6, (Color){100, 180, 255, 220});
                     }
 
-                    //Faiscas de impacto (saem do centro da carta atingida e somem conforme o contador)
                     FOR(i, MAX_POSITION) {
                         if (campos[i].carregada.cordenada.y > 0) {
                             FOR(k, 8) {
@@ -640,7 +639,7 @@ int main(void){
                             }
                             DrawCircle(campos[i].area.x + 96, campos[i].area.y + 144, 60 - campos[i].carregada.cordenada.y*3, Fade(WHITE, 0.5f - campos[i].carregada.cordenada.y/30));
                         }
-                        if (campos[i].carregada.cordenada.y < 0) { //Shockwave ao colocar a carta: um anel que cresce em volta dela e some
+                        if (campos[i].carregada.cordenada.y < 0) {
                             DrawRectangleRoundedLinesEx((Rectangle){campos[i].area.x + campos[i].carregada.cordenada.y*3, campos[i].area.y + campos[i].carregada.cordenada.y*3, campos[i].area.width - campos[i].carregada.cordenada.y*6, campos[i].area.height - campos[i].carregada.cordenada.y*6}, 0.12f, 6, 4.0f, Fade(WHITE, 1.0f + campos[i].carregada.cordenada.y/15));
                         }
                         if (camposInimigos[i].carregada.cordenada.y > 0) {
@@ -780,6 +779,8 @@ int main(void){
             }
         EndDrawing();
     }
+    UnloadMusicStream(ost);
+    CloseAudioDevice();
     FOR(i, MAX_CATALOGO) {
         UnloadTexture(texturasCarregadas[i]);
     }
