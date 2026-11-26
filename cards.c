@@ -35,7 +35,7 @@ int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]) {
         strncpy(catalogo[cartaCarregando].caminhoTextura, pedaco, sizeof(catalogo[cartaCarregando].caminhoTextura) - 1);
         pedaco = strtok(NULL, ",");
         if(strcmp(pedaco, "HABITAT") == 0){
-        catalogo[cartaCarregando].tipo = HABITAT;
+        catalogo[cartaCarregando].tipo = HABITAT; //se pedaco e nome forem igauis é true, atribuindo o type na carta
         }else if(strcmp(pedaco, "SPELL") == 0){
             catalogo[cartaCarregando].tipo = SPELL;
         }else if(strcmp(pedaco, "TRAP") == 0){
@@ -46,7 +46,7 @@ int criar_catalogo(CartaCSV catalogo[MAX_CATALOGO]) {
         pedaco = strtok(NULL, ",");
         const char *nomes[] = {"DRAGON","TOON","SPELLCASTER","WARRIOR","BEASTWARRIOR","FAIRY","FIEND","BEAST","WINGEDBEAST","INSECT","PLANT","REPTILE","DINOSAUR","FISH","SEASERPENT","AQUA","PYRO","THUNDER","ROCK","MACHINE","ZOMBIE","PSYCHIC","CYBERSE","WYRM","DIVINEBEAST","ILLUSION"};
         FOR(s, 26){
-           if(strcmp(pedaco, nomes[s]) == 0) catalogo[cartaCarregando].subTipo = s;
+           if(strcmp(pedaco, nomes[s]) == 0) catalogo[cartaCarregando].subTipo = s; //se pedaco e nome forem igauis é true, atribuindo o subtype na carta
 }
         cartaCarregando++;
     }
